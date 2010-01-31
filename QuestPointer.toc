@@ -1,0 +1,31 @@
+## Interface: 30300
+
+## Title: QuestPointer
+## Author: Kemayo
+## Notes: Point to quests
+## Version: @project-version@
+## X-Category: Quest
+
+## SavedVariables: QuestPointerDB
+## SavedVariablesPerCharacter: QuestPointerDBPC
+
+## OptionalDeps: tekDebug, tekErr
+
+## LoadOnDemand: 0
+## LoadManagers: AddonLoader
+## X-LoadOn-Always: delayed
+## X-LoadOn-Slash: /addontemplate
+
+lib\LibStub.lua
+lib\tekKonfigAboutPanel.lua
+
+#lib\LibDataBroker-1.1\LibDataBroker-1.1.lua
+#lib\Astrolabe\Load.xml
+
+template\Locale.lua
+template\Database.lua
+template\Slashcommand.lua
+template\UtilityFunctions.lua
+template\EventDispatcher.lua
+
+QuestPointer.lua
