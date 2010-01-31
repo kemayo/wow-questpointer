@@ -1,0 +1,4 @@
+
+externals:
+   lib/CallbackHandler-1.0: svn://svn.wowace.com/wow/callbackhandler/mainline/trunk/CallbackHandler-1.0
+   lib/LibDataBroker-1.1: git://github.com/tekkub/libdatabroker-1-1.git

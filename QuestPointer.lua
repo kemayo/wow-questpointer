@@ -1,6 +1,5 @@
 local myname, ns = ...
-
-QuestPointer = ns
+local myfullname = GetAddOnMetadata(myname, "Title")
 
 local Astrolabe = DongleStub("Astrolabe-0.4")
 -- Astrolabe.MinimapUpdateTime = 0.1 -- Speed up minimap updates

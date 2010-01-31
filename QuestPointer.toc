@@ -2,9 +2,11 @@
 
 ## Title: QuestPointer
 ## Author: Kemayo
-## Notes: Point to quests on your minimap
+## Notes: Point to quest POIs on your minimap
 ## Version: @project-version@
 ## X-Category: Quest, Map
+## X-Email: kemayo@gmail.com
+## X-Website: http://davidlynch.org/wow/
 
 ## SavedVariables: QuestPointerDB
 ## SavedVariablesPerCharacter: QuestPointerDBPC
@@ -17,15 +19,21 @@
 ## X-LoadOn-Slash: /addontemplate
 
 lib\LibStub.lua
-lib\tekKonfigAboutPanel.lua
+lib\CallbackHandler-1.0\CallbackHandler-1.0.xml
 
-#lib\LibDataBroker-1.1\LibDataBroker-1.1.lua
+lib\LibDataBroker-1.1\LibDataBroker-1.1.lua
+
 lib\Astrolabe\Load.xml
+
+lib\tekKonfigAboutPanel.lua
+lib\tekKonfigHeading.lua
+lib\tekKonfigSlider.lua
+lib\tekKonfigCheckbox.lua
 
 template\Locale.lua
 template\Database.lua
-template\Slashcommand.lua
 template\UtilityFunctions.lua
 template\EventDispatcher.lua
 
 QuestPointer.lua
+Config.lua
