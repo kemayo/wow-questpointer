@@ -2,9 +2,9 @@
 
 ## Title: QuestPointer
 ## Author: Kemayo
-## Notes: Point to quests
+## Notes: Point to quests on your minimap
 ## Version: @project-version@
-## X-Category: Quest
+## X-Category: Quest, Map
 
 ## SavedVariables: QuestPointerDB
 ## SavedVariablesPerCharacter: QuestPointerDBPC
@@ -20,7 +20,7 @@ lib\LibStub.lua
 lib\tekKonfigAboutPanel.lua
 
 #lib\LibDataBroker-1.1\LibDataBroker-1.1.lua
-#lib\Astrolabe\Load.xml
+lib\Astrolabe\Load.xml
 
 template\Locale.lua
 template\Database.lua
