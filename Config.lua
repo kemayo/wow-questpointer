@@ -40,7 +40,7 @@ InterfaceOptions_AddCategory(frame)
 --      Slash command      --
 -----------------------------
 
---_G["SLASH_".. myname:upper().."1"] = GetAddOnMetadata(myname, "X-LoadOn-Slash")
+_G["SLASH_".. myname:upper().."1"] = GetAddOnMetadata(myname, "X-LoadOn-Slash")
 SlashCmdList[myname:upper()] = function(msg)
 	InterfaceOptionsFrame_OpenToCategory(myname)
 end
@@ -51,7 +51,8 @@ end
 
 LibStub:GetLibrary("LibDataBroker-1.1"):NewDataObject(myname, {
 	type = "launcher",
-	icon = [[Interface\WorldMap\UI-QuestPoi-IconGlow.tga]],
+	icon = [[Interface\WorldMap\UI-WorldMap-QuestIcon.tga]],
+	iconCoords = {0, 0.5, 0, 0.5},
 	OnClick = function()
 		InterfaceOptionsFrame_OpenToCategory(myname)
 	end,

@@ -16,7 +16,7 @@
 ## LoadOnDemand: 0
 ## LoadManagers: AddonLoader
 ## X-LoadOn-Always: delayed
-## X-LoadOn-Slash: /addontemplate
+## X-LoadOn-Slash: /questpointer
 
 lib\LibStub.lua
 lib\CallbackHandler-1.0\CallbackHandler-1.0.xml
