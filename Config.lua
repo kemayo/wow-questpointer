@@ -20,8 +20,18 @@ frame.name = myfullname
 frame:Hide()
 frame:SetScript("OnShow", function(frame)
 	local title, subtitle = LibStub("tekKonfig-Heading").new(frame, myfullname, ("General settings for %s."):format(myfullname))
+	
+	local tracked = tekcheck.new(frame, nil, "Tracked quests only", "TOPLEFT", subtitle, "BOTTOMLEFT", -2, -GAP)
+	tracked.tiptext = "Only show icons on the minimap for quests you are tracking"
+	local checksound = tracked:GetScript("OnClick")
+	tracked:SetScript("OnClick", function(self)
+		checksound(self)
+		ns.db.watchedOnly = not ns.db.watchedOnly
+		ns:UpdatePOIs()
+	end)
+	tracked:SetChecked(ns.db.watchedOnly)
 
-	local scaleslider, scaleslidertext, scalecontainer = tekslider.new(frame, string.format("Icon scale: %.2f", ns.db.iconScale or 1), 0.3, 2, "TOPLEFT", subtitle, "BOTTOMLEFT", 2, -GAP)
+	local scaleslider, scaleslidertext, scalecontainer = tekslider.new(frame, string.format("Icon scale: %.2f", ns.db.iconScale or 1), 0.3, 2, "TOPLEFT", tracked, "BOTTOMLEFT", 2, -GAP)
 	scaleslider.tiptext = "Set the POI icon scale."
 	scaleslider:SetValue(ns.db.iconScale or 1)
 	scaleslider:SetValueStep(.05)

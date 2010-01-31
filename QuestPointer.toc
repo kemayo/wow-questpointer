@@ -30,7 +30,7 @@ lib\tekKonfigHeading.lua
 lib\tekKonfigSlider.lua
 lib\tekKonfigCheckbox.lua
 
-template\Locale.lua
+#template\Locale.lua
 template\Database.lua
 template\UtilityFunctions.lua
 template\EventDispatcher.lua

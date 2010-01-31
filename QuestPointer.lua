@@ -5,7 +5,8 @@ local Astrolabe = DongleStub("Astrolabe-0.4")
 -- Astrolabe.MinimapUpdateTime = 0.1 -- Speed up minimap updates
 
 ns.defaults = {
-	iconScale = 0.7
+	iconScale = 0.7,
+	watchedOnly = false,
 }
 ns.defaultsPC = {}
 
@@ -17,6 +18,10 @@ function ns:ADDON_LOADED(event, addon)
 	self:RegisterEvent("QUEST_POI_UPDATE")
 	self:RegisterEvent("QUEST_LOG_UPDATE")
 	self:RegisterEvent("ZONE_CHANGED_NEW_AREA")
+
+	local update = function() self:UpdatePOIs() end
+	hooksecurefunc("AddQuestWatch", update)
+	hooksecurefunc("RemoveQuestWatch", update)
 
 	LibStub("tekKonfig-AboutPanel").new(myfullname, myname) -- Make first arg nil if no parent config panel
 
@@ -68,7 +73,7 @@ function ns:UpdatePOIs(...)
 	for i=1, numEntries do
 		local questId, questLogIndex = QuestPOIGetQuestIDByVisibleIndex(i)
 		local _, posX, posY, objective = QuestPOIGetIconInfo(questId)
-		if posX and posY then
+		if posX and posY and (IsQuestWatched(questLogIndex) or not self.db.watchedOnly) then
 			local title, level, questTag, suggestedGroup, isHeader, isCollapsed, isComplete, isDaily = GetQuestLogTitle(questLogIndex)
 			local numObjectives = GetNumQuestLeaderBoards(questLogIndex)
 			if isComplete and isComplete < 0 then
