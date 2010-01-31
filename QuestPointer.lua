@@ -31,10 +31,7 @@ function ns:PLAYER_LOGIN()
 	self:RegisterEvent("PLAYER_LOGOUT")
 
 	-- Do anything you need to do after the player has entered the world
-	
-	-- POIs don't have position info until after SetMapToCurrentZone has been called
-	-- Consider checking for it instead of blindly calling?
-	SetMapToCurrentZone()
+
 	self:UpdatePOIs()
 
 	self:UnregisterEvent("PLAYER_LOGIN")
@@ -54,65 +51,71 @@ function ns:UpdatePOIs(...)
 	
 	local c,z,x,y = Astrolabe:GetCurrentPlayerPosition()
 	if not c then
-		-- means that this was probably a change triggered by the world map being navigated
-		-- since this is the case, we won't update any POIs for now
+		-- Means that this was probably a change triggered by the world map being
+		-- opened and browsed around. Since this is the case, we won't update any POIs for now.
 		self.Debug("Skipped UpdatePOIs because of no player position")
 		return
 	end
 	
+	-- Interestingly, even if this isn't called, *some* POIs will show up. Not sure why.
+	QuestPOIUpdateIcons()
+	
 	for id, poi in pairs(pois) do
 		Astrolabe:RemoveIconFromMinimap(poi)
 	end
-	-- wipe(pois)
 	
 	local numCompletedQuests = 0
 	local numEntries = QuestMapUpdateAllQuests()
 	for i=1, numEntries do
 		local questId, questLogIndex = QuestPOIGetQuestIDByVisibleIndex(i)
 		local _, posX, posY, objective = QuestPOIGetIconInfo(questId)
-		local title, level, questTag, suggestedGroup, isHeader, isCollapsed, isComplete, isDaily = GetQuestLogTitle(questLogIndex)
-		local numObjectives = GetNumQuestLeaderBoards(questLogIndex)
-		if isComplete and isComplete < 0 then
-			isComplete = false
-		elseif numObjectives == 0 then
-			isComplete = true
-		end
-		self.Debug("POI", questId, posX, posY, objective, title, isComplete)
-		
-		local poi = pois[i]
-		if not poi then
-			poi = CreateFrame("Frame", "QuestPointerPOI"..i, Minimap)
-			poi:SetWidth(10)
-			poi:SetHeight(10)
-			poi:SetScript("OnEnter", POI_OnEnter)
-			poi:SetScript("OnLeave", POI_OnLeave)
-			poi:SetScript("OnMouseUp", POI_OnMouseUp)
-			poi:EnableMouse()
-		end
-		local poiButton
-		if isComplete then
-			self.Debug("Making with QUEST_POI_COMPLETE_SWAP", i)
-			poiButton = QuestPOI_DisplayButton("Minimap", QUEST_POI_COMPLETE_SWAP, i, questId)
-			numCompletedQuests = numCompletedQuests + 1
+		if posX and posY then
+			local title, level, questTag, suggestedGroup, isHeader, isCollapsed, isComplete, isDaily = GetQuestLogTitle(questLogIndex)
+			local numObjectives = GetNumQuestLeaderBoards(questLogIndex)
+			if isComplete and isComplete < 0 then
+				isComplete = false
+			elseif numObjectives == 0 then
+				isComplete = true
+			end
+			self.Debug("POI", questId, posX, posY, objective, title, isComplete)
+			
+			local poi = pois[i]
+			if not poi then
+				poi = CreateFrame("Frame", "QuestPointerPOI"..i, Minimap)
+				poi:SetWidth(10)
+				poi:SetHeight(10)
+				poi:SetScript("OnEnter", POI_OnEnter)
+				poi:SetScript("OnLeave", POI_OnLeave)
+				poi:SetScript("OnMouseUp", POI_OnMouseUp)
+				poi:EnableMouse()
+			end
+			local poiButton
+			if isComplete then
+				self.Debug("Making with QUEST_POI_COMPLETE_SWAP", i)
+				poiButton = QuestPOI_DisplayButton("Minimap", QUEST_POI_COMPLETE_SWAP, i, questId)
+				numCompletedQuests = numCompletedQuests + 1
+			else
+				self.Debug("Making with QUEST_POI_NUMERIC", i - numCompletedQuests)
+				poiButton = QuestPOI_DisplayButton("Minimap", QUEST_POI_NUMERIC, i - numCompletedQuests, questId)
+			end
+			poiButton:SetPoint("CENTER", poi)
+			poiButton:SetScale(self.db.iconScale)
+			poiButton:SetParent(poi)
+			poiButton:EnableMouse(false)
+			poi.ownPOI = poiButton
+			
+			poi.index = i
+			poi.questId = questId
+			poi.questLogIndex = questLogIndex
+			
+			Astrolabe:PlaceIconOnMinimap(poi, c, z, posX, posY)
+			
+			self.Debug(Astrolabe:IsIconOnEdge(poi) and "on edge" or "not on edge")
+			
+			pois[questId] = poi
 		else
-			self.Debug("Making with QUEST_POI_NUMERIC", i - numCompletedQuests)
-			poiButton = QuestPOI_DisplayButton("Minimap", QUEST_POI_NUMERIC, i - numCompletedQuests, questId)
+			self.Debug("Skipped POI", i, posX, posY)
 		end
-		poiButton:SetPoint("CENTER", poi)
-		poiButton:SetScale(self.db.iconScale)
-		poiButton:SetParent(poi)
-		poiButton:EnableMouse(false)
-		poi.ownPOI = poiButton
-		
-		poi.index = i
-		poi.questId = questId
-		poi.questLogIndex = questLogIndex
-		
-		Astrolabe:PlaceIconOnMinimap(poi, c, z, posX, posY)
-		
-		self.Debug(Astrolabe:IsIconOnEdge(poi) and "on edge" or "not on edge")
-		
-		pois[questId] = poi
 	end
 end
 ns.QUEST_POI_UPDATE = ns.UpdatePOIs
