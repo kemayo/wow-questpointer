@@ -7,6 +7,7 @@ local Astrolabe = DongleStub("Astrolabe-0.4")
 ns.defaults = {
 	iconScale = 0.7,
 	watchedOnly = false,
+	useArrows = false,
 }
 ns.defaultsPC = {}
 
@@ -48,7 +49,8 @@ function ns:PLAYER_LOGOUT()
 end
 
 local pois = {}
-local POI_OnEnter, POI_OnLeave, POI_OnMouseUp
+QPPOIS = pois
+local POI_OnEnter, POI_OnLeave, POI_OnMouseUp, Arrow_OnUpdate
 
 function ns:UpdatePOIs(...)
 	self.Debug("UpdatePOIs", ...)
@@ -92,10 +94,29 @@ function ns:UpdatePOIs(...)
 				poi:SetScript("OnLeave", POI_OnLeave)
 				poi:SetScript("OnMouseUp", POI_OnMouseUp)
 				poi:EnableMouse()
+				
+				local arrow = CreateFrame("Frame", nil, poi)
+				arrow:SetPoint("CENTER", poi)
+				arrow:SetScript("OnUpdate", Arrow_OnUpdate)
+				arrow:SetWidth(32)
+				arrow:SetHeight(32)
+				
+				local arrowtexture = arrow:CreateTexture(nil, "OVERLAY")
+				arrowtexture:SetTexture([[Interface\Minimap\ROTATING-MINIMAPGUIDEARROW.tga]])
+				arrowtexture:SetAllPoints(arrow)
+				arrow.texture = arrowtexture
+				arrow.t = 0
+				arrow.poi = poi
+				arrow:Hide()
+				
+				poi.arrow = arrow
 			end
+			
 			local poiButton
 			if isComplete then
-				self.Debug("Making with QUEST_POI_COMPLETE_SWAP", i)
+				self.Debug("Making with QUEST_POI_COMPLETE_IN", i)
+				-- Using QUEST_POI_COMPLETE_SWAP gets the ? without any circle
+				-- Using QUEST_POI_COMPLETE_IN gets the ? in a brownish circle
 				poiButton = QuestPOI_DisplayButton("Minimap", QUEST_POI_COMPLETE_SWAP, i, questId)
 				numCompletedQuests = numCompletedQuests + 1
 			else
@@ -106,7 +127,9 @@ function ns:UpdatePOIs(...)
 			poiButton:SetScale(self.db.iconScale)
 			poiButton:SetParent(poi)
 			poiButton:EnableMouse(false)
-			poi.ownPOI = poiButton
+			poi.poiButton = poiButton
+			
+			poi.arrow:SetScale(self.db.iconScale)
 			
 			poi.index = i
 			poi.questId = questId
@@ -114,13 +137,13 @@ function ns:UpdatePOIs(...)
 			
 			Astrolabe:PlaceIconOnMinimap(poi, c, z, posX, posY)
 			
-			self.Debug(Astrolabe:IsIconOnEdge(poi) and "on edge" or "not on edge")
-			
-			pois[questId] = poi
+			pois[i] = poi
 		else
 			self.Debug("Skipped POI", i, posX, posY)
 		end
 	end
+	
+	self:UpdateEdges()
 end
 ns.QUEST_POI_UPDATE = ns.UpdatePOIs
 ns.QUEST_LOG_UPDATE = ns.UpdatePOIs
@@ -155,17 +178,58 @@ do
 		end
 		WorldMapFrame_SelectQuest(frame)
 	end
+	
+	local square_half = math.sqrt(0.5)
+	local rad_135 = math.rad(135)
+	function Arrow_OnUpdate(self, elapsed)
+		self.t = self.t + elapsed
+		if self.t < Astrolabe.MinimapUpdateTime then
+			return
+		end
+		
+		local angle = Astrolabe:GetDirectionToIcon(self.poi)
+		angle = angle + rad_135
+
+		if GetCVar("rotateMinimap") == "1" then
+			angle = angle - GetPlayerFacing()
+		end
+		
+		if angle == self.last_angle then
+			return
+		end
+		self.last_angle = angle
+		
+		--rotate the texture
+		local sin,cos = math.sin(angle) * square_half, math.cos(angle) * square_half
+		self.texture:SetTexCoord(0.5-sin, 0.5+cos, 0.5+cos, 0.5+sin, 0.5-cos, 0.5-sin, 0.5+sin, 0.5-cos)
+	end
 end
 
---[[
--- This would be needed for switching to a different look when icons are on the edge of the minimap.
-Astrolabe:Register_OnEdgeChanged_Callback(function(...)
+function ns:UpdateEdges()
 	for id, poi in pairs(pois) do
 		if Astrolabe:IsIconOnEdge(poi) then
-		
+			self.Debug("On edge", id, poi)
+			if self.db.useArrows then
+				self.Debug("Using arrows")
+				poi.poiButton:Hide()
+				poi.arrow:Show()
+			else
+				self.Debug("Not using arrows")
+				poi.poiButton:Show()
+				poi.arrow:Hide()
+				poi.poiButton:SetAlpha(0.5)
+			end
 		else
-		
+			self.Debug("Not on edge", id, poi)
+			poi.poiButton:Show()
+			poi.arrow:Hide()
+			poi.poiButton:SetAlpha(1)
 		end
 	end
+end
+
+-- This would be needed for switching to a different look when icons are on the edge of the minimap.
+Astrolabe:Register_OnEdgeChanged_Callback(function(...)
+	ns.Debug("OnEdgeChanged", ...)
+	ns:UpdateEdges()
 end, "QuestPointer")
---]]

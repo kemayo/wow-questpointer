@@ -31,7 +31,16 @@ frame:SetScript("OnShow", function(frame)
 	end)
 	tracked:SetChecked(ns.db.watchedOnly)
 
-	local scaleslider, scaleslidertext, scalecontainer = tekslider.new(frame, string.format("Icon scale: %.2f", ns.db.iconScale or 1), 0.3, 2, "TOPLEFT", tracked, "BOTTOMLEFT", 2, -GAP)
+	local useArrows = tekcheck.new(frame, nil, "Arrows on the edge", "TOPLEFT", tracked, "BOTTOMLEFT", -2, -GAP)
+	useArrows.tiptext = "Change the POI icons to arrows when they're off the edge of the minimap"
+	useArrows:SetScript("OnClick", function(self)
+		checksound(self)
+		ns.db.useArrows = not ns.db.useArrows
+		ns:UpdatePOIs()
+	end)
+	useArrows:SetChecked(ns.db.useArrows)
+
+	local scaleslider, scaleslidertext, scalecontainer = tekslider.new(frame, string.format("Icon scale: %.2f", ns.db.iconScale or 1), 0.3, 2, "TOPLEFT", useArrows, "BOTTOMLEFT", 2, -GAP)
 	scaleslider.tiptext = "Set the POI icon scale."
 	scaleslider:SetValue(ns.db.iconScale or 1)
 	scaleslider:SetValueStep(.05)
