@@ -48,6 +48,15 @@ frame:SetScript("OnShow", function(frame)
 		ns:UpdatePOIs()
 	end)
 
+	local autoTomTom = tekcheck.new(frame, nil, "Automatically add to TomTom", "TOPLEFT", scalecontainer, "BOTTOMLEFT", -2, -GAP)
+	autoTomTom.tiptext = "Automatically set TomTom's CrazyArrow to point to the nearest quest POI. This will mess up anything else you're trying to do with TomTom, so be careful with it."
+	autoTomTom:SetScript("OnClick", function(self)
+		checksound(self)
+		ns.db.autoTomTom = not ns.db.autoTomTom
+		ns:AutoTomTom()
+	end)
+	autoTomTom:SetChecked(ns.db.autoTomTom)
+
 	frame:SetScript("OnShow", nil)
 end)
 
@@ -60,7 +69,7 @@ InterfaceOptions_AddCategory(frame)
 _G["SLASH_".. myname:upper().."1"] = GetAddOnMetadata(myname, "X-LoadOn-Slash")
 _G["SLASH_".. myname:upper().."2"] = "/qp"
 SlashCmdList[myname:upper()] = function(msg)
-	if msg:match("closest") then
+	if msg:match("closest") and ns.TomTomClosestPOI then
 		ns:TomTomClosestPOI()
 	else
 		InterfaceOptionsFrame_OpenToCategory(myname)
@@ -78,7 +87,7 @@ LibStub:GetLibrary("LibDataBroker-1.1"):NewDataObject(myname, {
 	OnClick = function(self, button)
 		if button == "RightButton" then
 			InterfaceOptionsFrame_OpenToCategory(myname)
-		else
+		elseif ns.TomTomClosestPOI then
 			ns:TomTomClosestPOI()
 		end
 	end,

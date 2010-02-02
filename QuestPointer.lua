@@ -8,6 +8,7 @@ ns.defaults = {
 	iconScale = 0.7,
 	watchedOnly = false,
 	useArrows = false,
+	autoTomTom = false,
 }
 ns.defaultsPC = {}
 
@@ -38,6 +39,7 @@ function ns:PLAYER_LOGIN()
 	-- Do anything you need to do after the player has entered the world
 
 	self:UpdatePOIs()
+	if ns.AutoTomTom then ns:AutoTomTom() end
 
 	self:UnregisterEvent("PLAYER_LOGIN")
 	self.PLAYER_LOGIN = nil
@@ -242,28 +244,3 @@ Astrolabe:Register_OnEdgeChanged_Callback(function(...)
 	ns.Debug("OnEdgeChanged", ...)
 	ns:UpdateEdges()
 end, "QuestPointer")
-
-local tomtompoint
-function ns:TomTomClosestPOI()
-	if not (TomTom and TomTom.AddZWaypoint and TomTom.RemoveWaypoint) then
-		return
-	end
-	if tomtompoint then
-		tomtompoint = TomTom.RemoveWaypoint(tomtompoint)
-	end
-	local closest
-	for k,poi in pairs(ns.pois) do
-		if poi.active then
-			if closest then
-				if Astrolabe:GetDistanceToIcon(poi) < Astrolabe:GetDistanceToIcon(closest) then
-					closest = poi
-				end
-			else
-				closest = poi
-			end
-		end
-	end
-	if closest then
-		TomTom:AddZWaypoint(closest.c, closest.z, closest.x * 100, closest.y * 100, closest.title, false, false, false, false, false, true)
-	end
-end

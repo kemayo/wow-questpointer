@@ -36,4 +36,5 @@ template\UtilityFunctions.lua
 template\EventDispatcher.lua
 
 QuestPointer.lua
+TomTom.lua
 Config.lua
