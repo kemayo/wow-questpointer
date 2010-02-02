@@ -71,6 +71,8 @@ function ns:UpdatePOIs(...)
 	
 	for id, poi in pairs(pois) do
 		Astrolabe:RemoveIconFromMinimap(poi)
+		poi.poiButton:Hide()
+		poi.arrow:Hide()
 		poi.active = false
 	end
 	
