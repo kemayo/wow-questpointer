@@ -9,8 +9,6 @@ local tekcheck = LibStub("tekKonfig-Checkbox")
 local tekslider = LibStub("tekKonfig-Slider")
 local GAP = 8
 
-local icon = LibStub("LibDBIcon-1.0", true)
-
 ---------------------
 --      Panel      --
 ---------------------
@@ -60,8 +58,13 @@ InterfaceOptions_AddCategory(frame)
 -----------------------------
 
 _G["SLASH_".. myname:upper().."1"] = GetAddOnMetadata(myname, "X-LoadOn-Slash")
+_G["SLASH_".. myname:upper().."2"] = "/qp"
 SlashCmdList[myname:upper()] = function(msg)
-	InterfaceOptionsFrame_OpenToCategory(myname)
+	if msg:match("closest") then
+		ns:TomTomClosestPOI()
+	else
+		InterfaceOptionsFrame_OpenToCategory(myname)
+	end
 end
 
 ----------------------------------------
@@ -72,7 +75,11 @@ LibStub:GetLibrary("LibDataBroker-1.1"):NewDataObject(myname, {
 	type = "launcher",
 	icon = [[Interface\WorldMap\UI-WorldMap-QuestIcon.tga]],
 	iconCoords = {0, 0.5, 0, 0.5},
-	OnClick = function()
-		InterfaceOptionsFrame_OpenToCategory(myname)
+	OnClick = function(self, button)
+		if button == "RightButton" then
+			InterfaceOptionsFrame_OpenToCategory(myname)
+		else
+			ns:TomTomClosestPOI()
+		end
 	end,
 })

@@ -49,8 +49,9 @@ function ns:PLAYER_LOGOUT()
 end
 
 local pois = {}
-QPPOIS = pois
 local POI_OnEnter, POI_OnLeave, POI_OnMouseUp, Arrow_OnUpdate
+
+ns.pois = pois
 
 function ns:UpdatePOIs(...)
 	self.Debug("UpdatePOIs", ...)
@@ -68,7 +69,10 @@ function ns:UpdatePOIs(...)
 	
 	for id, poi in pairs(pois) do
 		Astrolabe:RemoveIconFromMinimap(poi)
+		poi.active = false
 	end
+	
+	-- self:ClearTomTom()
 	
 	local numCompletedQuests = 0
 	local numEntries = QuestMapUpdateAllQuests()
@@ -134,8 +138,15 @@ function ns:UpdatePOIs(...)
 			poi.index = i
 			poi.questId = questId
 			poi.questLogIndex = questLogIndex
+			poi.c = c
+			poi.z = z
+			poi.x = posX
+			poi.y = posY
+			poi.title = title
+			poi.active = true
 			
 			Astrolabe:PlaceIconOnMinimap(poi, c, z, posX, posY)
+			-- self:AddTomTom(c, z, posX, posY, title)
 			
 			pois[i] = poi
 		else
@@ -210,11 +221,9 @@ function ns:UpdateEdges()
 		if Astrolabe:IsIconOnEdge(poi) then
 			self.Debug("On edge", id, poi)
 			if self.db.useArrows then
-				self.Debug("Using arrows")
 				poi.poiButton:Hide()
 				poi.arrow:Show()
 			else
-				self.Debug("Not using arrows")
 				poi.poiButton:Show()
 				poi.arrow:Hide()
 				poi.poiButton:SetAlpha(0.5)
@@ -233,3 +242,28 @@ Astrolabe:Register_OnEdgeChanged_Callback(function(...)
 	ns.Debug("OnEdgeChanged", ...)
 	ns:UpdateEdges()
 end, "QuestPointer")
+
+local tomtompoint
+function ns:TomTomClosestPOI()
+	if not (TomTom and TomTom.AddZWaypoint and TomTom.RemoveWaypoint) then
+		return
+	end
+	if tomtompoint then
+		tomtompoint = TomTom.RemoveWaypoint(tomtompoint)
+	end
+	local closest
+	for k,poi in pairs(ns.pois) do
+		if poi.active then
+			if closest then
+				if Astrolabe:GetDistanceToIcon(poi) < Astrolabe:GetDistanceToIcon(closest) then
+					closest = poi
+				end
+			else
+				closest = poi
+			end
+		end
+	end
+	if closest then
+		TomTom:AddZWaypoint(closest.c, closest.z, closest.x * 100, closest.y * 100, closest.title, false, false, false, false, false, true)
+	end
+end
