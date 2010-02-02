@@ -221,7 +221,6 @@ end
 function ns:UpdateEdges()
 	for id, poi in pairs(pois) do
 		if Astrolabe:IsIconOnEdge(poi) then
-			self.Debug("On edge", id, poi)
 			if self.db.useArrows then
 				poi.poiButton:Hide()
 				poi.arrow:Show()
@@ -231,7 +230,6 @@ function ns:UpdateEdges()
 				poi.poiButton:SetAlpha(0.5)
 			end
 		else
-			self.Debug("Not on edge", id, poi)
 			poi.poiButton:Show()
 			poi.arrow:Hide()
 			poi.poiButton:SetAlpha(1)
@@ -241,6 +239,5 @@ end
 
 -- This would be needed for switching to a different look when icons are on the edge of the minimap.
 Astrolabe:Register_OnEdgeChanged_Callback(function(...)
-	ns.Debug("OnEdgeChanged", ...)
 	ns:UpdateEdges()
 end, "QuestPointer")

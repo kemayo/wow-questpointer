@@ -9,7 +9,7 @@ function ns:TomTomClosestPOI()
 		return
 	end
 	if tomtompoint then
-		tomtompoint = TomTom.RemoveWaypoint(tomtompoint)
+		tomtompoint = TomTom:RemoveWaypoint(tomtompoint)
 	end
 	local closest
 	for k,poi in pairs(ns.pois) do
@@ -24,7 +24,7 @@ function ns:TomTomClosestPOI()
 		end
 	end
 	if closest then
-		TomTom:AddZWaypoint(closest.c, closest.z, closest.x * 100, closest.y * 100, closest.title, false, false, false, false, false, true)
+		tomtompoint = TomTom:AddZWaypoint(closest.c, closest.z, closest.x * 100, closest.y * 100, closest.title, false, false, false, false, false, true)
 	end
 end
 
@@ -42,6 +42,7 @@ function ns:AutoTomTom()
 		f:SetScript("OnUpdate", function(self, elapsed)
 			t = t + elapsed
 			if t > 3 then -- this doesn't change very often at all; maybe more than 3 seconds?
+				t = 0
 				ns:TomTomClosestPOI()
 			end
 		end)
