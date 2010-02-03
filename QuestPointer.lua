@@ -2,7 +2,6 @@ local myname, ns = ...
 local myfullname = GetAddOnMetadata(myname, "Title")
 
 local Astrolabe = DongleStub("Astrolabe-0.4")
--- Astrolabe.MinimapUpdateTime = 0.1 -- Speed up minimap updates
 
 ns.defaults = {
 	iconScale = 0.7,
@@ -196,11 +195,13 @@ do
 	
 	local square_half = math.sqrt(0.5)
 	local rad_135 = math.rad(135)
+	local update_threshold = 0.1
 	function Arrow_OnUpdate(self, elapsed)
 		self.t = self.t + elapsed
-		if self.t < Astrolabe.MinimapUpdateTime then
+		if self.t < update_threshold then
 			return
 		end
+		self.t = 0
 		
 		local angle = Astrolabe:GetDirectionToIcon(self.poi)
 		angle = angle + rad_135
