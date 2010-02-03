@@ -54,6 +54,22 @@ local POI_OnEnter, POI_OnLeave, POI_OnMouseUp, Arrow_OnUpdate
 
 ns.pois = pois
 
+function ns:ClosestPOI(all)
+	local closest
+	for k,poi in pairs(ns.pois) do
+		if poi.active then
+			if closest then
+				if Astrolabe:GetDistanceToIcon(poi) < Astrolabe:GetDistanceToIcon(closest) then
+					closest = poi
+				end
+			else
+				closest = poi
+			end
+		end
+	end
+	return closest
+end
+
 function ns:UpdatePOIs(...)
 	self.Debug("UpdatePOIs", ...)
 	
@@ -149,7 +165,6 @@ function ns:UpdatePOIs(...)
 			poi.active = true
 			
 			Astrolabe:PlaceIconOnMinimap(poi, c, z, posX, posY)
-			-- self:AddTomTom(c, z, posX, posY, title)
 			
 			pois[i] = poi
 		else
@@ -162,6 +177,24 @@ end
 ns.QUEST_POI_UPDATE = ns.UpdatePOIs
 ns.QUEST_LOG_UPDATE = ns.UpdatePOIs
 ns.ZONE_CHANGED_NEW_AREA = ns.UpdatePOIs
+
+do
+	local t = 0
+	local f = CreateFrame("Frame")
+	f:SetScript("OnUpdate", function(self, elapsed)
+		t = t + elapsed
+		if t > 3 then -- this doesn't change very often at all; maybe more than 3 seconds?
+			t = 0
+			for i,poi in pairs(pois) do
+				poi.poiButton.selectionGlow:Hide()
+			end
+			closest = ns:ClosestPOI()
+			if closest then
+				closest.poiButton.selectionGlow:Show()
+			end
+		end
+	end)
+end
 
 do
 	local tooltip = CreateFrame("GameTooltip", "QuestPointerTooltip", UIParent, "GameTooltipTemplate")
