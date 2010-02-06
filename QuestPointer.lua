@@ -74,7 +74,7 @@ function ns:UpdatePOIs(...)
 	self.Debug("UpdatePOIs", ...)
 	
 	local c,z,x,y = Astrolabe:GetCurrentPlayerPosition()
-	if not c then
+	if not (c and z and x and y) then
 		-- Means that this was probably a change triggered by the world map being
 		-- opened and browsed around. Since this is the case, we won't update any POIs for now.
 		self.Debug("Skipped UpdatePOIs because of no player position")
@@ -90,8 +90,6 @@ function ns:UpdatePOIs(...)
 		poi.arrow:Hide()
 		poi.active = false
 	end
-	
-	-- self:ClearTomTom()
 	
 	local numCompletedQuests = 0
 	local numEntries = QuestMapUpdateAllQuests()
@@ -109,7 +107,12 @@ function ns:UpdatePOIs(...)
 			self.Debug("POI", questId, posX, posY, objective, title, isComplete)
 			
 			local poi = pois[i]
-			if not poi then
+			if poi then
+				if poi.poiButton then
+					poi.poiButton:Hide()
+					poi.poiButton:SetParent(Minimap)
+				end
+			else
 				poi = CreateFrame("Frame", "QuestPointerPOI"..i, Minimap)
 				poi:SetWidth(10)
 				poi:SetHeight(10)
