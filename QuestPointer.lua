@@ -55,15 +55,18 @@ local POI_OnEnter, POI_OnLeave, POI_OnMouseUp, Arrow_OnUpdate
 ns.pois = pois
 
 function ns:ClosestPOI(all)
-	local closest
+	local closest, closest_distance, poi_distance
 	for k,poi in pairs(ns.pois) do
 		if poi.active then
+			poi_distance = Astrolabe:GetDistanceToIcon(poi)
 			if closest then
-				if Astrolabe:GetDistanceToIcon(poi) < Astrolabe:GetDistanceToIcon(closest) then
+				if poi_distance and closest_distance and poi_distance < closest_distance then
 					closest = poi
+					closest_distance = poi_distance
 				end
 			else
 				closest = poi
+				closest_distance = poi_distance
 			end
 		end
 	end
@@ -72,6 +75,13 @@ end
 
 function ns:UpdatePOIs(...)
 	self.Debug("UpdatePOIs", ...)
+	
+	for id, poi in pairs(pois) do
+		Astrolabe:RemoveIconFromMinimap(poi)
+		poi.poiButton:Hide()
+		poi.arrow:Hide()
+		poi.active = false
+	end
 	
 	local c,z,x,y = Astrolabe:GetCurrentPlayerPosition()
 	if not (c and z and x and y) then
@@ -83,13 +93,6 @@ function ns:UpdatePOIs(...)
 	
 	-- Interestingly, even if this isn't called, *some* POIs will show up. Not sure why.
 	QuestPOIUpdateIcons()
-	
-	for id, poi in pairs(pois) do
-		Astrolabe:RemoveIconFromMinimap(poi)
-		poi.poiButton:Hide()
-		poi.arrow:Hide()
-		poi.active = false
-	end
 	
 	local numCompletedQuests = 0
 	local numEntries = QuestMapUpdateAllQuests()
