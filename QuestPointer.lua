@@ -78,7 +78,11 @@ function ns:UpdatePOIs(...)
 	
 	for id, poi in pairs(pois) do
 		Astrolabe:RemoveIconFromMinimap(poi)
-		poi.poiButton:Hide()
+		if poi.poiButton then
+			poi.poiButton:Hide()
+			poi.poiButton:SetParent(Minimap)
+			poi.poiButton = nil
+		end
 		poi.arrow:Hide()
 		poi.active = false
 	end
@@ -110,12 +114,7 @@ function ns:UpdatePOIs(...)
 			self.Debug("POI", questId, posX, posY, objective, title, isComplete)
 			
 			local poi = pois[i]
-			if poi then
-				if poi.poiButton then
-					poi.poiButton:Hide()
-					poi.poiButton:SetParent(Minimap)
-				end
-			else
+			if not poi then
 				poi = CreateFrame("Frame", "QuestPointerPOI"..i, Minimap)
 				poi:SetWidth(10)
 				poi:SetHeight(10)
@@ -146,7 +145,7 @@ function ns:UpdatePOIs(...)
 				self.Debug("Making with QUEST_POI_COMPLETE_IN", i)
 				-- Using QUEST_POI_COMPLETE_SWAP gets the ? without any circle
 				-- Using QUEST_POI_COMPLETE_IN gets the ? in a brownish circle
-				poiButton = QuestPOI_DisplayButton("Minimap", QUEST_POI_COMPLETE_SWAP, i, questId)
+				poiButton = QuestPOI_DisplayButton("Minimap", QUEST_POI_COMPLETE_IN, i, questId)
 				numCompletedQuests = numCompletedQuests + 1
 			else
 				self.Debug("Making with QUEST_POI_NUMERIC", i - numCompletedQuests)
@@ -179,10 +178,25 @@ function ns:UpdatePOIs(...)
 	end
 	
 	self:UpdateEdges()
+	self:UpdateGlow()
 end
 ns.QUEST_POI_UPDATE = ns.UpdatePOIs
 ns.QUEST_LOG_UPDATE = ns.UpdatePOIs
 ns.ZONE_CHANGED_NEW_AREA = ns.UpdatePOIs
+
+function ns:UpdateGlow()
+	for i,poi in pairs(pois) do
+		if poi.active then
+			-- poi.poiButton.selectionGlow:Hide()
+			QuestPOI_DeselectButton(poi.poiButton)
+		end
+	end
+	closest = self:ClosestPOI()
+	if closest then
+		-- closest.poiButton.selectionGlow:Show()
+		QuestPOI_SelectButton(closest.poiButton)
+	end
+end
 
 do
 	local t = 0
@@ -191,13 +205,7 @@ do
 		t = t + elapsed
 		if t > 3 then -- this doesn't change very often at all; maybe more than 3 seconds?
 			t = 0
-			for i,poi in pairs(pois) do
-				poi.poiButton.selectionGlow:Hide()
-			end
-			closest = ns:ClosestPOI()
-			if closest then
-				closest.poiButton.selectionGlow:Show()
-			end
+			ns:UpdateGlow()
 		end
 	end)
 end
@@ -262,19 +270,21 @@ end
 
 function ns:UpdateEdges()
 	for id, poi in pairs(pois) do
-		if Astrolabe:IsIconOnEdge(poi) then
-			if self.db.useArrows then
-				poi.poiButton:Hide()
-				poi.arrow:Show()
+		if poi.active then
+			if Astrolabe:IsIconOnEdge(poi) then
+				if self.db.useArrows then
+					poi.poiButton:Hide()
+					poi.arrow:Show()
+				else
+					poi.poiButton:Show()
+					poi.arrow:Hide()
+					poi.poiButton:SetAlpha(0.6)
+				end
 			else
 				poi.poiButton:Show()
 				poi.arrow:Hide()
-				poi.poiButton:SetAlpha(0.5)
+				poi.poiButton:SetAlpha(1)
 			end
-		else
-			poi.poiButton:Show()
-			poi.arrow:Hide()
-			poi.poiButton:SetAlpha(1)
 		end
 	end
 end
