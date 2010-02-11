@@ -20,7 +20,7 @@ function ns:AutoTomTom()
 				if tomtompoint then
 					tomtompoint = TomTom:RemoveWaypoint(tomtompoint)
 				end
-				closest = ns:ClosestPOI()
+				local closest = ns:ClosestPOI()
 				if closest then
 					tomtompoint = TomTom:AddZWaypoint(closest.c, closest.z, closest.x * 100, closest.y * 100, closest.title, false, false, false, false, false, true)
 				end

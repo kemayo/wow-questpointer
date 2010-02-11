@@ -191,7 +191,7 @@ function ns:UpdateGlow()
 			QuestPOI_DeselectButton(poi.poiButton)
 		end
 	end
-	closest = self:ClosestPOI()
+	local closest = self:ClosestPOI()
 	if closest then
 		-- closest.poiButton.selectionGlow:Show()
 		QuestPOI_SelectButton(closest.poiButton)
