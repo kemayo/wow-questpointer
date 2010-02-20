@@ -48,7 +48,46 @@ frame:SetScript("OnShow", function(frame)
 		ns:UpdatePOIs()
 	end)
 
-	local autoTomTom = tekcheck.new(frame, nil, "Automatically add to TomTom", "TOPLEFT", scalecontainer, "BOTTOMLEFT", -2, -GAP)
+	local ascaleslider, ascaleslidertext, ascalecontainer = tekslider.new(frame, string.format("Arrow scale: %.2f", ns.db.arrowScale or 1), 0.3, 2, "TOPLEFT", scalecontainer, "BOTTOMLEFT", 2, -GAP)
+	ascaleslider.tiptext = "Set the POI arrow scale."
+	ascaleslider:SetValue(ns.db.arrowScale or 1)
+	ascaleslider:SetValueStep(.05)
+	ascaleslider:SetScript("OnValueChanged", function(self)
+		ns.db.arrowScale = self:GetValue()
+		ascaleslidertext:SetText(string.format("Arrow scale: %.2f", ns.db.arrowScale or 1))
+		ns:UpdatePOIs()
+	end)
+	
+	local ialphaslider, ialphaslidertext, ialphacontainer = tekslider.new(frame, string.format("Icon alpha: %.2f", ns.db.iconAlpha or 1), 0.1, 1, "TOPLEFT", ascalecontainer, "BOTTOMLEFT", 2, -GAP)
+	ialphaslider.tiptext = "Set the POI icon ialpha."
+	ialphaslider:SetValue(ns.db.iconAlpha or 1)
+	ialphaslider:SetValueStep(.05)
+	ialphaslider:SetScript("OnValueChanged", function(self)
+		ns.db.iconAlpha = self:GetValue()
+		ialphaslidertext:SetText(string.format("Icon alpha: %.2f", ns.db.iconAlpha or 1))
+		ns:UpdatePOIs()
+	end)
+	
+	local aalphaslider, aalphaslidertext, aalphacontainer = tekslider.new(frame, string.format("Arrow alpha: %.2f", ns.db.arrowAlpha or 1), 0.1, 1, "TOPLEFT", ialphacontainer, "BOTTOMLEFT", 2, -GAP)
+	aalphaslider.tiptext = "Set the POI icon aalpha."
+	aalphaslider:SetValue(ns.db.arrowAlpha or 1)
+	aalphaslider:SetValueStep(.05)
+	aalphaslider:SetScript("OnValueChanged", function(self)
+		ns.db.arrowAlpha = self:GetValue()
+		aalphaslidertext:SetText(string.format("Arrow alpha: %.2f", ns.db.arrowAlpha or 1))
+		ns:UpdatePOIs()
+	end)
+	
+	local fadeEdge = tekcheck.new(frame, nil, "Fade non-arrow icons on the edge", "TOPLEFT", aalphacontainer, "BOTTOMLEFT", -2, -GAP)
+	fadeEdge.tiptext = "Automatically set TomTom's CrazyArrow to point to the nearest quest POI. This will mess up anything else you're trying to do with TomTom, so be careful with it."
+	fadeEdge:SetScript("OnClick", function(self)
+		checksound(self)
+		ns.db.fadeEdge = not ns.db.fadeEdge
+		ns:UpdatePOIs()
+	end)
+	fadeEdge:SetChecked(ns.db.fadeEdge)
+
+	local autoTomTom = tekcheck.new(frame, nil, "Automatically add to TomTom", "TOPLEFT", fadeEdge, "BOTTOMLEFT", -2, -GAP)
 	autoTomTom.tiptext = "Automatically set TomTom's CrazyArrow to point to the nearest quest POI. This will mess up anything else you're trying to do with TomTom, so be careful with it."
 	autoTomTom:SetScript("OnClick", function(self)
 		checksound(self)

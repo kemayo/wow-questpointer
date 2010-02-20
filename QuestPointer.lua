@@ -5,8 +5,12 @@ local Astrolabe = DongleStub("Astrolabe-0.4")
 
 ns.defaults = {
 	iconScale = 0.7,
+	arrowScale = 0.7,
+	iconAlpha = 1,
+	arrowAlpha = 1,
 	watchedOnly = false,
 	useArrows = false,
+	fadeEdge = true,
 	autoTomTom = false,
 }
 ns.defaultsPC = {}
@@ -157,7 +161,7 @@ function ns:UpdatePOIs(...)
 			poiButton:EnableMouse(false)
 			poi.poiButton = poiButton
 			
-			poi.arrow:SetScale(self.db.iconScale)
+			poi.arrow:SetScale(self.db.arrowScale)
 			
 			poi.index = i
 			poi.questId = questId
@@ -275,15 +279,16 @@ function ns:UpdateEdges()
 				if self.db.useArrows then
 					poi.poiButton:Hide()
 					poi.arrow:Show()
+					poi.arrow:SetAlpha(ns.db.arrowAlpha)
 				else
 					poi.poiButton:Show()
 					poi.arrow:Hide()
-					poi.poiButton:SetAlpha(0.6)
+					poi.poiButton:SetAlpha(ns.db.iconAlpha * (ns.db.fadeEdge and 0.6 or 1))
 				end
 			else
 				poi.poiButton:Show()
 				poi.arrow:Hide()
-				poi.poiButton:SetAlpha(1)
+				poi.poiButton:SetAlpha(ns.db.iconAlpha)
 			end
 		end
 	end
