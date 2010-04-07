@@ -6,6 +6,9 @@ function ns:AutoTomTom()
 	if not (TomTom and TomTom.AddZWaypoint and TomTom.RemoveWaypoint) then
 		return
 	end
+
+	if UnitIsGhost("player") then return end
+
 	if not self.db.autoTomTom then
 		return f and f:Hide()
 	end

@@ -59,8 +59,6 @@ local POI_OnEnter, POI_OnLeave, POI_OnMouseUp, Arrow_OnUpdate
 ns.pois = pois
 
 function ns:ClosestPOI(all)
-	if UnitIsGhost("player") then return end
-
 	local closest, closest_distance, poi_distance
 	for k,poi in pairs(ns.pois) do
 		if poi.active then
