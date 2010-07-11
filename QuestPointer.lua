@@ -241,7 +241,7 @@ do
 		if not frame then
 			return
 		end
-		WorldMapFrame_SelectQuest(frame)
+		WorldMapFrame_SelectQuestFrame(frame)
 	end
 	
 	local square_half = math.sqrt(0.5)
