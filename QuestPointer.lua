@@ -102,6 +102,7 @@ function ns:UpdatePOIs(...)
 	-- Interestingly, even if this isn't called, *some* POIs will show up. Not sure why.
 	QuestPOIUpdateIcons()
 	
+	local numNumericQuests = 0
 	local numCompletedQuests = 0
 	local numEntries = QuestMapUpdateAllQuests()
 	for i=1, numEntries do
@@ -149,11 +150,12 @@ function ns:UpdatePOIs(...)
 				self.Debug("Making with QUEST_POI_COMPLETE_IN", i)
 				-- Using QUEST_POI_COMPLETE_SWAP gets the ? without any circle
 				-- Using QUEST_POI_COMPLETE_IN gets the ? in a brownish circle
-				poiButton = QuestPOI_DisplayButton("Minimap", QUEST_POI_COMPLETE_IN, i, questId)
 				numCompletedQuests = numCompletedQuests + 1
+				poiButton = QuestPOI_DisplayButton("Minimap", QUEST_POI_COMPLETE_IN, numCompletedQuests, questId)
 			else
 				self.Debug("Making with QUEST_POI_NUMERIC", i - numCompletedQuests)
-				poiButton = QuestPOI_DisplayButton("Minimap", QUEST_POI_NUMERIC, i - numCompletedQuests, questId)
+				numNumericQuests = numNumericQuests + 1
+				poiButton = QuestPOI_DisplayButton("Minimap", QUEST_POI_NUMERIC, numNumericQuests, questId)
 			end
 			poiButton:SetPoint("CENTER", poi)
 			poiButton:SetScale(self.db.iconScale)
