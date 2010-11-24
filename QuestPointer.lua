@@ -1,7 +1,7 @@
 local myname, ns = ...
 local myfullname = GetAddOnMetadata(myname, "Title")
 
-local Astrolabe = DongleStub("Astrolabe-0.4")
+local Astrolabe = DongleStub("Astrolabe-1.0")
 
 ns.defaults = {
 	iconScale = 0.7,
