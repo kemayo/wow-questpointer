@@ -1,5 +1,6 @@
 local myname, ns = ...
 local myfullname = GetAddOnMetadata(myname, "Title")
+local Debug = ns.Debug
 
 local Astrolabe = DongleStub("Astrolabe-1.0")
 
@@ -105,84 +106,87 @@ function ns:UpdatePOIs(...)
 	local numNumericQuests = 0
 	local numCompletedQuests = 0
 	local numEntries = QuestMapUpdateAllQuests()
+	Debug("Quests on map", numEntries)
 	for i=1, numEntries do
 		local questId, questLogIndex = QuestPOIGetQuestIDByVisibleIndex(i)
-		local _, posX, posY, objective = QuestPOIGetIconInfo(questId)
-		if posX and posY and (IsQuestWatched(questLogIndex) or not self.db.watchedOnly) then
-			local title, level, questTag, suggestedGroup, isHeader, isCollapsed, isComplete, isDaily = GetQuestLogTitle(questLogIndex)
-			local numObjectives = GetNumQuestLeaderBoards(questLogIndex)
-			if isComplete and isComplete < 0 then
-				isComplete = false
-			elseif numObjectives == 0 then
-				isComplete = true
-			end
-			self.Debug("POI", questId, posX, posY, objective, title, isComplete)
-			
-			local poi = pois[i]
-			if not poi then
-				poi = CreateFrame("Frame", "QuestPointerPOI"..i, Minimap)
-				poi:SetWidth(10)
-				poi:SetHeight(10)
-				poi:SetScript("OnEnter", POI_OnEnter)
-				poi:SetScript("OnLeave", POI_OnLeave)
-				poi:SetScript("OnMouseUp", POI_OnMouseUp)
-				poi:EnableMouse()
+		Debug("Quest", questId, questLogIndex)
+		if questId then
+			local _, posX, posY, objective = QuestPOIGetIconInfo(questId)
+			if posX and posY and (IsQuestWatched(questLogIndex) or not self.db.watchedOnly) then
+				local title, level, questTag, suggestedGroup, isHeader, isCollapsed, isComplete, isDaily = GetQuestLogTitle(questLogIndex)
+				local numObjectives = GetNumQuestLeaderBoards(questLogIndex)
+				if isComplete and isComplete < 0 then
+					isComplete = false
+				elseif numObjectives == 0 then
+					isComplete = true
+				end
+				self.Debug("POI", questId, posX, posY, objective, title, isComplete)
 				
-				local arrow = CreateFrame("Frame", nil, poi)
-				arrow:SetPoint("CENTER", poi)
-				arrow:SetScript("OnUpdate", Arrow_OnUpdate)
-				arrow:SetWidth(32)
-				arrow:SetHeight(32)
+				local poi = pois[i]
+				if not poi then
+					poi = CreateFrame("Frame", "QuestPointerPOI"..i, Minimap)
+					poi:SetWidth(10)
+					poi:SetHeight(10)
+					poi:SetScript("OnEnter", POI_OnEnter)
+					poi:SetScript("OnLeave", POI_OnLeave)
+					poi:SetScript("OnMouseUp", POI_OnMouseUp)
+					poi:EnableMouse()
+					
+					local arrow = CreateFrame("Frame", nil, poi)
+					arrow:SetPoint("CENTER", poi)
+					arrow:SetScript("OnUpdate", Arrow_OnUpdate)
+					arrow:SetWidth(32)
+					arrow:SetHeight(32)
+					
+					local arrowtexture = arrow:CreateTexture(nil, "OVERLAY")
+					arrowtexture:SetTexture([[Interface\Minimap\ROTATING-MINIMAPGUIDEARROW.tga]])
+					arrowtexture:SetAllPoints(arrow)
+					arrow.texture = arrowtexture
+					arrow.t = 0
+					arrow.poi = poi
+					arrow:Hide()
+					
+					poi.arrow = arrow
+				end
 				
-				local arrowtexture = arrow:CreateTexture(nil, "OVERLAY")
-				arrowtexture:SetTexture([[Interface\Minimap\ROTATING-MINIMAPGUIDEARROW.tga]])
-				arrowtexture:SetAllPoints(arrow)
-				arrow.texture = arrowtexture
-				arrow.t = 0
-				arrow.poi = poi
-				arrow:Hide()
+				local poiButton
+				if isComplete then
+					self.Debug("Making with QUEST_POI_COMPLETE_IN", i)
+					-- Using QUEST_POI_COMPLETE_SWAP gets the ? without any circle
+					-- Using QUEST_POI_COMPLETE_IN gets the ? in a brownish circle
+					numCompletedQuests = numCompletedQuests + 1
+					poiButton = QuestPOI_DisplayButton("Minimap", QUEST_POI_COMPLETE_IN, numCompletedQuests, questId)
+				else
+					self.Debug("Making with QUEST_POI_NUMERIC", i - numCompletedQuests)
+					numNumericQuests = numNumericQuests + 1
+					poiButton = QuestPOI_DisplayButton("Minimap", QUEST_POI_NUMERIC, numNumericQuests, questId)
+				end
+				poiButton:SetPoint("CENTER", poi)
+				poiButton:SetScale(self.db.iconScale)
+				poiButton:SetParent(poi)
+				poiButton:EnableMouse(false)
+				poi.poiButton = poiButton
 				
-				poi.arrow = arrow
-			end
-			
-			local poiButton
-			if isComplete then
-				self.Debug("Making with QUEST_POI_COMPLETE_IN", i)
-				-- Using QUEST_POI_COMPLETE_SWAP gets the ? without any circle
-				-- Using QUEST_POI_COMPLETE_IN gets the ? in a brownish circle
-				numCompletedQuests = numCompletedQuests + 1
-				poiButton = QuestPOI_DisplayButton("Minimap", QUEST_POI_COMPLETE_IN, numCompletedQuests, questId)
+				poi.arrow:SetScale(self.db.arrowScale)
+				
+				poi.index = i
+				poi.questId = questId
+				poi.questLogIndex = questLogIndex
+				poi.c = c
+				poi.z = z
+				poi.x = posX
+				poi.y = posY
+				poi.title = title
+				poi.active = true
+				
+				Astrolabe:PlaceIconOnMinimap(poi, c, z, posX, posY)
+				
+				pois[i] = poi
 			else
-				self.Debug("Making with QUEST_POI_NUMERIC", i - numCompletedQuests)
-				numNumericQuests = numNumericQuests + 1
-				poiButton = QuestPOI_DisplayButton("Minimap", QUEST_POI_NUMERIC, numNumericQuests, questId)
+				self.Debug("Skipped POI", i, posX, posY)
 			end
-			poiButton:SetPoint("CENTER", poi)
-			poiButton:SetScale(self.db.iconScale)
-			poiButton:SetParent(poi)
-			poiButton:EnableMouse(false)
-			poi.poiButton = poiButton
-			
-			poi.arrow:SetScale(self.db.arrowScale)
-			
-			poi.index = i
-			poi.questId = questId
-			poi.questLogIndex = questLogIndex
-			poi.c = c
-			poi.z = z
-			poi.x = posX
-			poi.y = posY
-			poi.title = title
-			poi.active = true
-			
-			Astrolabe:PlaceIconOnMinimap(poi, c, z, posX, posY)
-			
-			pois[i] = poi
-		else
-			self.Debug("Skipped POI", i, posX, posY)
 		end
 	end
-	
 	self:UpdateEdges()
 	self:UpdateGlow()
 end
