@@ -233,10 +233,10 @@ do
 		
 		tooltip:SetOwner(self, "ANCHOR_BOTTOMLEFT")
 		
-		local title = GetQuestLogTitle(self.questLogIndex)
-		tooltip:AddLine(title)
-		
-		tooltip:Show()
+		local link = GetQuestLink(self.questLogIndex)
+		if link then
+			tooltip:SetHyperlink(link)
+		end
 	end
 	
 	function POI_OnLeave(self)
