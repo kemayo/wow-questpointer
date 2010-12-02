@@ -64,6 +64,7 @@ function ns:ClosestPOI(all)
 	for k,poi in pairs(ns.pois) do
 		if poi.active then
 			poi_distance = Astrolabe:GetDistanceToIcon(poi)
+			
 			if closest then
 				if poi_distance and closest_distance and poi_distance < closest_distance then
 					closest = poi
@@ -178,6 +179,7 @@ function ns:UpdatePOIs(...)
 				poi.y = posY
 				poi.title = title
 				poi.active = true
+				poi.complete = isComplete
 				
 				Astrolabe:PlaceIconOnMinimap(poi, c, z, posX, posY)
 				
@@ -292,7 +294,12 @@ function ns:UpdateEdges()
 					poi.poiButton:SetAlpha(ns.db.iconAlpha * (ns.db.fadeEdge and 0.6 or 1))
 				end
 			else
-				poi.poiButton:Show()
+				--hide completed POIs when close enough to see the ?
+				if poi.complete then
+					poi.poiButton:Hide()
+				else
+					poi.poiButton:Show()
+				end
 				poi.arrow:Hide()
 				poi.poiButton:SetAlpha(ns.db.iconAlpha)
 			end
