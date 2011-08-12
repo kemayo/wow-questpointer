@@ -1,7 +1,7 @@
 --[[
 Name: Astrolabe
-Revision: $Rev: 116 $
-$Date: 2010-11-22 20:59:44 -0800 (Mon, 22 Nov 2010) $
+Revision: $Rev: 125 $
+$Date: 2010-12-11 21:17:15 -0800 (Sat, 11 Dec 2010) $
 Author(s): Esamynn (esamynn at wowinterface.com)
 Inspired By: Gatherer by Norganna
              MapLibrary by Kristofer Karlsson (krka at kth.se)
@@ -42,7 +42,7 @@ Note:
 -- DO NOT MAKE CHANGES TO THIS LIBRARY WITHOUT FIRST CHANGING THE LIBRARY_VERSION_MAJOR
 -- STRING (to something unique) OR ELSE YOU MAY BREAK OTHER ADDONS THAT USE THIS LIBRARY!!!
 local LIBRARY_VERSION_MAJOR = "Astrolabe-1.0"
-local LIBRARY_VERSION_MINOR = tonumber(string.match("$Revision: 116 $", "(%d+)") or 1)
+local LIBRARY_VERSION_MINOR = tonumber(string.match("$Revision: 125 $", "(%d+)") or 1)
 
 if not DongleStub then error(LIBRARY_VERSION_MAJOR .. " requires DongleStub.") end
 if not DongleStub:IsNewerVersion(LIBRARY_VERSION_MAJOR, LIBRARY_VERSION_MINOR) then return end
@@ -167,8 +167,9 @@ function Astrolabe:ComputeDistance( m1, f1, x1, y1, m2, f2, x2, y2 )
 	argcheck(y2, 9, "number");
 	--]]
 	
-	f1 = f1 or 0;
-	f2 = f2 or 0;
+	if not ( m1 and m2 ) then return end;
+	f1 = f1 or min(#WorldMapSize[m1], 1);
+	f2 = f2 or min(#WorldMapSize[m2], 1);
 	
 	local dist, xDelta, yDelta;
 	if ( m1 == m2 and f1 == f2 ) then
@@ -234,8 +235,9 @@ function Astrolabe:TranslateWorldMapPosition( M, F, xPos, yPos, nM, nF )
 	argcheck(nF, 7, "number", "nil");
 	--]]
 	
-	F = F or 0;
-	nF = nF or 0;
+	if not ( M and nM ) then return end;
+	F = F or min(#WorldMapSize[M], 1);
+	nF = nF or min(#WorldMapSize[nM], 1);
 	if ( nM < 0 ) then
 		return;
 	end
@@ -254,8 +256,6 @@ function Astrolabe:TranslateWorldMapPosition( M, F, xPos, yPos, nM, nF )
 			if ( nF ~= 0 ) then
 				mapData = mapData[nF];
 			end
-			xPos = xPos - mapData.xOffset;
-			yPos = yPos - mapData.yOffset;
 		
 		else
 			-- different continents, same world
@@ -291,6 +291,10 @@ function Astrolabe:TranslateWorldMapPosition( M, F, xPos, yPos, nM, nF )
 			end
 		
 		end
+		-- need to account for the offset in the new system so we can
+		-- correctly translate into 0-1 style coordinates
+		xPos = xPos - mapData.xOffset;
+		yPos = yPos - mapData.yOffset;
 	
 	end
 	
@@ -355,15 +359,26 @@ function Astrolabe:GetMapID(continent, zone)
 	end
 end
 
+function Astrolabe:GetNumFloors( mapID )
+	if ( type(mapID) == "number" ) then
+		local mapData = WorldMapSize[mapID]
+		return #mapData
+	end
+end
+
 function Astrolabe:GetMapInfo( mapID, mapFloor )
-	mapFloor = mapFloor or 0
-	local mapData = WorldMapSize[mapID]
+	argcheck(mapID, 2, "number");
+	assert(3, mapID >= 0, "GetMapInfo: Illegal map id to mapID: "..mapID);
+	argcheck(mapFloor, 3, "number", "nil");
+	
+	mapFloor = mapFloor or min(#WorldMapSize[mapID], 1);
+	local mapData = WorldMapSize[mapID];
 	local system, systemParent = mapData.system, mapData.systemParent
 	if ( mapFloor ~= 0 ) then
 		mapData = mapData[mapFloor];
 	end
 	if ( mapData ~= zeroData ) then
-		return system, systemParent, mapData.width, mapData.height, mapData.xOffset, mapData.yOffset
+		return system, systemParent, mapData.width, mapData.height, mapData.xOffset, mapData.yOffset;
 	end
 end
 
@@ -1330,6 +1345,22 @@ WorldMapSize = {
 		xOffset = 0,
 		yOffset = 0,
 	},
+	[521] = {
+		{ -- [1]
+			height = 1216.66649,
+			width = 1824.99985,
+			xOffset = 435.33678,
+			yOffset = 2235.80349,
+		},
+	},
+	[529] = {
+		{ -- [1]
+			height = 2191.66598,
+			width = 3287.50074,
+			xOffset = -1804.35279,
+			yOffset = 2062.9701,
+		},
+	},
 	[531] = {
 		height = 774.99991,
 		width = 1162.49961,
@@ -1369,6 +1400,12 @@ WorldMapSize = {
 	[611] = {
 		height = 593.74988,
 		width = 889.58325,
+		xOffset = 0,
+		yOffset = 0,
+	},
+	[626] = {
+		height = 810.41329,
+		width = 1214.58151,
 		xOffset = 0,
 		yOffset = 0,
 	},
@@ -1429,8 +1466,20 @@ WorldMapSize = {
 		xOffset = 0,
 		yOffset = 0,
 	},
+	[736] = {
+		height = 868.74697,
+		width = 1302.08448,
+		xOffset = 0,
+		yOffset = 0,
+	},
 	[737] = {
 		system = 737,
+	},
+	[747] = {
+		height = 647.91734,
+		width = 970.83627,
+		xOffset = 0,
+		yOffset = 0,
 	},
 }
 
@@ -1445,7 +1494,7 @@ end
 zeroData = { xOffset = 0, height = 0, yOffset = 0, width = 0, __index = zeroDataFunc };
 setmetatable(zeroData, zeroData);
 
-function printError( ... )
+local function printError( ... )
 	if ( ASTROLABE_VERBOSE) then
 		print(...)
 	end
@@ -1538,9 +1587,7 @@ for mapID, harvestedData in pairs(Astrolabe.HarvestedMapData) do
 		-- setup the system and systemParent IDs so things don't get confused
 		if not ( next(mapData, nil) ) then
 			mapData = { xOffset = 0, height = 0, yOffset = 0, width = 0 };
-			setmetatable(mapData, zeroData);
-			
-			-- if this is a regluar outside zone map and 
+			-- if this is an outside continent level or world map then throw up an extra warning
 			if ( harvestedData.cont > 0 and harvestedData.zone == 0 ) then
 				printError(("Astrolabe is missing data for world map %s [%d] (%d, %d)."):format(harvestedData.mapName, mapID, harvestedData.cont, harvestedData.zone));
 			end
@@ -1568,11 +1615,28 @@ for mapID, harvestedData in pairs(Astrolabe.HarvestedMapData) do
 				mapData.systemParent = systemData.systemParent;
 			end
 		end
+		
+		-- systemParent sanity checks
+		if ( mapData.system ~= mapData.systemParent ) then
+			if not ( WorldMapSize[mapData.systemParent] and WorldMapSize[mapData.systemParent][mapData.system] ) then
+				printError("Astrolabe detected a child system that the parent doesn't know about.  VERY BAD!!!");
+			end
+		end
+		
 		setmetatable(mapData, zeroData);
 	end
 end
 
-setmetatable(WorldMapSize, zeroData);
+setmetatable(WorldMapSize[0], zeroData); -- special case for World Map
+
+-- make sure we don't have any EXTRA data hanging around
+for mapID, mapData in pairs(WorldMapSize) do
+	if ( getmetatable(mapData) ~= zeroData ) then
+		printError("Astrolabe has hard coded data for an invalid map ID", mapID);
+	end
+end
+
+setmetatable(WorldMapSize, zeroData); -- setup the metatable so that invalid map IDs don't cause Lua errors
 
 -- register this library with AstrolabeMapMonitor, this will cause a full update if PLAYER_LOGIN has already fired
 local AstrolabeMapMonitor = DongleStub("AstrolabeMapMonitor");
