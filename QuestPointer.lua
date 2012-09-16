@@ -43,7 +43,10 @@ function ns:PLAYER_LOGIN()
 	-- Do anything you need to do after the player has entered the world
 
 	self:UpdatePOIs()
-	if ns.AutoTomTom then ns:AutoTomTom() end
+	if ns.AutoTomTom then
+		Debug("Calling AutoTomTom")
+		ns:AutoTomTom()
+	end
 
 	self:UnregisterEvent("PLAYER_LOGIN")
 	self.PLAYER_LOGIN = nil
@@ -93,8 +96,8 @@ function ns:UpdatePOIs(...)
 		poi.active = false
 	end
 	
-	local c,z,x,y = Astrolabe:GetCurrentPlayerPosition()
-	if not (c and z and x and y) then
+	local m,f,x,y = Astrolabe:GetCurrentPlayerPosition()
+	if not (m and f and x and y) then
 		-- Means that this was probably a change triggered by the world map being
 		-- opened and browsed around. Since this is the case, we won't update any POIs for now.
 		self.Debug("Skipped UpdatePOIs because of no player position")
@@ -173,15 +176,15 @@ function ns:UpdatePOIs(...)
 				poi.index = i
 				poi.questId = questId
 				poi.questLogIndex = questLogIndex
-				poi.c = c
-				poi.z = z
+				poi.m = m
+				poi.f = f
 				poi.x = posX
 				poi.y = posY
 				poi.title = title
 				poi.active = true
 				poi.complete = isComplete
 				
-				Astrolabe:PlaceIconOnMinimap(poi, c, z, posX, posY)
+				Astrolabe:PlaceIconOnMinimap(poi, m, f, posX, posY)
 				
 				pois[i] = poi
 			else
