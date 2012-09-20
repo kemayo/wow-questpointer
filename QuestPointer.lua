@@ -247,7 +247,7 @@ do
 	end
 	
 	function POI_OnMouseUp(self)
-		WorldMapFrame:Show()
+		ShowUIPanel(WorldMapFrame)
 		local frame = _G["WorldMapQuestFrame"..self.index]
 		if not frame then
 			return
