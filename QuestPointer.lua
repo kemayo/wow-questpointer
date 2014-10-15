@@ -31,6 +31,9 @@ function ns:ADDON_LOADED(event, addon)
 
 	LibStub("tekKonfig-AboutPanel").new(myfullname, myname) -- Make first arg nil if no parent config panel
 
+	ns.poi_parent = CreateFrame("Frame")
+	QuestPOI_Initialize(ns.poi_parent)
+
 	self:UnregisterEvent("ADDON_LOADED")
 	self.ADDON_LOADED = nil
 
@@ -117,15 +120,14 @@ function ns:UpdatePOIs(...)
 		if questId then
 			local _, posX, posY, objective = QuestPOIGetIconInfo(questId)
 			if posX and posY and (IsQuestWatched(questLogIndex) or not self.db.watchedOnly) then
-				local title, level, questTag, suggestedGroup, isHeader, isCollapsed, isComplete, isDaily = GetQuestLogTitle(questLogIndex)
-				local numObjectives = GetNumQuestLeaderBoards(questLogIndex)
+				local title, level, suggestedGroup, isHeader, isCollapsed, isComplete, frequency, questID, startEvent, displayQuestID, isOnMap, hasLocalPOI, isTask, isStory = GetQuestLogTitle(questLogIndex)
 				if isComplete and isComplete < 0 then
 					isComplete = false
 				elseif numObjectives == 0 then
 					isComplete = true
 				end
 				self.Debug("POI", questId, posX, posY, objective, title, isComplete)
-				
+
 				local poi = pois[i]
 				if not poi then
 					poi = CreateFrame("Frame", "QuestPointerPOI"..i, Minimap)
@@ -134,7 +136,7 @@ function ns:UpdatePOIs(...)
 					poi:SetScript("OnEnter", POI_OnEnter)
 					poi:SetScript("OnLeave", POI_OnLeave)
 					poi:SetScript("OnMouseUp", POI_OnMouseUp)
-					poi:EnableMouse()
+					poi:EnableMouse(true)
 					
 					local arrow = CreateFrame("Frame", nil, poi)
 					arrow:SetPoint("CENTER", poi)
@@ -152,18 +154,18 @@ function ns:UpdatePOIs(...)
 					
 					poi.arrow = arrow
 				end
-				
+
 				local poiButton
 				if isComplete then
 					self.Debug("Making with QUEST_POI_COMPLETE_IN", i)
 					-- Using QUEST_POI_COMPLETE_SWAP gets the ? without any circle
 					-- Using QUEST_POI_COMPLETE_IN gets the ? in a brownish circle
 					numCompletedQuests = numCompletedQuests + 1
-					poiButton = QuestPOI_DisplayButton("Minimap", QUEST_POI_COMPLETE_IN, numCompletedQuests, questId)
+					poiButton = QuestPOI_GetButton(ns.poi_parent, questId, hasLocalPOI and 'normal' or 'remote', numCompletedQuests, isStory)
 				else
 					self.Debug("Making with QUEST_POI_NUMERIC", i - numCompletedQuests)
 					numNumericQuests = numNumericQuests + 1
-					poiButton = QuestPOI_DisplayButton("Minimap", QUEST_POI_NUMERIC, numNumericQuests, questId)
+					poiButton = QuestPOI_GetButton(ns.poi_parent, questId, hasLocalPOI and 'numeric' or 'remote', numNumericQuests, isStory)
 				end
 				poiButton:SetPoint("CENTER", poi)
 				poiButton:SetScale(self.db.iconScale)
@@ -200,12 +202,7 @@ ns.QUEST_LOG_UPDATE = ns.UpdatePOIs
 ns.ZONE_CHANGED_NEW_AREA = ns.UpdatePOIs
 
 function ns:UpdateGlow()
-	for i,poi in pairs(pois) do
-		if poi.active then
-			-- poi.poiButton.selectionGlow:Hide()
-			QuestPOI_DeselectButton(poi.poiButton)
-		end
-	end
+	QuestPOI_ClearSelection(ns.poi_parent)
 	local closest = self:ClosestPOI()
 	if closest then
 		-- closest.poiButton.selectionGlow:Show()
