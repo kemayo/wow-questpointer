@@ -11,7 +11,7 @@
 ## SavedVariables: QuestPointerDB
 ## SavedVariablesPerCharacter: QuestPointerDBPC
 
-## OptionalDeps: tekDebug, tekErr, TomTom
+## OptionalDeps: tekDebug, tekErr, TomTom, HereBeDragons-1.0
 
 ## LoadOnDemand: 0
 ## LoadManagers: AddonLoader
@@ -23,7 +23,8 @@ lib\CallbackHandler-1.0\CallbackHandler-1.0.xml
 
 lib\LibDataBroker-1.1\LibDataBroker-1.1.lua
 
-lib\Astrolabe\Load.xml
+lib\HereBeDragons-1.0\HereBeDragons-1.0.lua
+lib\HereBeDragons-1.0\HereBeDragons-Pins-1.0.lua
 
 lib\tekKonfigAboutPanel.lua
 lib\tekKonfigHeading.lua

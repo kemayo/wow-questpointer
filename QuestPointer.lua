@@ -2,7 +2,8 @@ local myname, ns = ...
 local myfullname = GetAddOnMetadata(myname, "Title")
 local Debug = ns.Debug
 
-local Astrolabe = DongleStub("Astrolabe-1.0")
+local HBD = LibStub("HereBeDragons-1.0")
+local HBDPins = LibStub("HereBeDragons-Pins-1.0")
 
 ns.defaults = {
 	iconScale = 0.7,
@@ -66,10 +67,10 @@ local POI_OnEnter, POI_OnLeave, POI_OnMouseUp, Arrow_OnUpdate
 ns.pois = pois
 
 function ns:ClosestPOI(all)
-	local closest, closest_distance, poi_distance
+	local closest, closest_distance, poi_distance, _
 	for k,poi in pairs(ns.pois) do
 		if poi.active then
-			poi_distance = Astrolabe:GetDistanceToIcon(poi)
+			_, poi_distance = HBDPins:GetVectorToIcon(poi)
 			
 			if closest then
 				if poi_distance and closest_distance and poi_distance < closest_distance then
@@ -89,7 +90,7 @@ function ns:UpdatePOIs(...)
 	self.Debug("UpdatePOIs", ...)
 	
 	for id, poi in pairs(pois) do
-		Astrolabe:RemoveIconFromMinimap(poi)
+		HBDPins:RemoveMinimapIcon(self, poi)
 		if poi.poiButton then
 			poi.poiButton:Hide()
 			poi.poiButton:SetParent(Minimap)
@@ -99,7 +100,7 @@ function ns:UpdatePOIs(...)
 		poi.active = false
 	end
 	
-	local m,f,x,y = Astrolabe:GetCurrentPlayerPosition()
+	local x,y,m,f = HBD:GetPlayerZonePosition()
 	if not (m and f and x and y) then
 		-- Means that this was probably a change triggered by the world map being
 		-- opened and browsed around. Since this is the case, we won't update any POIs for now.
@@ -186,7 +187,7 @@ function ns:UpdatePOIs(...)
 				poi.active = true
 				poi.complete = isComplete
 				
-				Astrolabe:PlaceIconOnMinimap(poi, m, f, posX, posY)
+				HBDPins:AddMinimapIconMF(self, poi, m, f, posX, posY, true)
 				
 				pois[i] = poi
 			else
@@ -262,7 +263,7 @@ do
 		end
 		self.t = 0
 		
-		local angle = Astrolabe:GetDirectionToIcon(self.poi)
+		local angle = HBDPins:GetVectorToIcon(self.poi)
 		angle = angle + rad_135
 
 		if GetCVar("rotateMinimap") == "1" then
@@ -283,7 +284,7 @@ end
 function ns:UpdateEdges()
 	for id, poi in pairs(pois) do
 		if poi.active then
-			if Astrolabe:IsIconOnEdge(poi) then
+			if HBDPins:IsMinimapIconOnEdge(poi) then
 				if self.db.useArrows then
 					poi.poiButton:Hide()
 					poi.arrow:Show()
@@ -308,6 +309,6 @@ function ns:UpdateEdges()
 end
 
 -- This would be needed for switching to a different look when icons are on the edge of the minimap.
-Astrolabe:Register_OnEdgeChanged_Callback(function(...)
+C_Timer.NewTicker(1, function(...)
 	ns:UpdateEdges()
-end, "QuestPointer")
+end)
