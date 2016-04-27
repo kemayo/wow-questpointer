@@ -312,3 +312,5 @@ end
 C_Timer.NewTicker(1, function(...)
 	ns:UpdateEdges()
 end)
+
+function ns.Print(...) print("|cFF33FF99".. myfullname.. "|r:", ...) end

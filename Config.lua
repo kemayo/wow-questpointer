@@ -108,8 +108,12 @@ InterfaceOptions_AddCategory(frame)
 _G["SLASH_".. myname:upper().."1"] = GetAddOnMetadata(myname, "X-LoadOn-Slash")
 _G["SLASH_".. myname:upper().."2"] = "/qp"
 SlashCmdList[myname:upper()] = function(msg)
-	if msg:match("closest") and ns.TomTomClosestPOI then
-		ns:TomTomClosestPOI()
+	if msg:match("closest") then
+		if ns.TomTomClosestPOI then
+			ns:TomTomClosestPOI()
+		else
+			ns.Print("TomTom not found")
+		end
 	else
 		InterfaceOptionsFrame_OpenToCategory(myname)
 	end
