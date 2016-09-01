@@ -91,6 +91,10 @@ end
 function ns:UpdatePOIs(...)
 	self.Debug("UpdatePOIs", ...)
 	
+	if WorldMapFrame:IsVisible() then
+		return
+	end
+
 	for id, poi in pairs(pois) do
 		HBDPins:RemoveMinimapIcon(self, poi)
 		if poi.poiButton then
@@ -101,15 +105,20 @@ function ns:UpdatePOIs(...)
 		poi.arrow:Hide()
 		poi.active = false
 	end
-	
-	local x,y,m,f = HBD:GetPlayerZonePosition()
+
+	local x, y, m, f = HBD:GetPlayerZonePosition()
 	if not (m and f and x and y) then
 		-- Means that this was probably a change triggered by the world map being
 		-- opened and browsed around. Since this is the case, we won't update any POIs for now.
 		self.Debug("Skipped UpdatePOIs because of no player position")
 		return
 	end
-	
+
+	local oldZone = GetCurrentMapAreaID()
+	SetMapToCurrentZone()
+
+	local cvar = GetCVarBool("questPOI")
+	SetCVar("questPOI", 1)
 	-- Interestingly, even if this isn't called, *some* POIs will show up. Not sure why.
 	QuestPOIUpdateIcons()
 	
@@ -192,6 +201,10 @@ function ns:UpdatePOIs(...)
 			end
 		end
 	end
+
+	SetMapByID(oldZone)
+	SetCVar("questPOI", cvar and 1 or 0)
+
 	self:UpdateEdges()
 	self:UpdateGlow()
 end
