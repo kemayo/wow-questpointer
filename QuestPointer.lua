@@ -25,6 +25,8 @@ function ns:ADDON_LOADED(event, addon)
 	self:RegisterEvent("QUEST_POI_UPDATE")
 	self:RegisterEvent("QUEST_LOG_UPDATE")
 	self:RegisterEvent("ZONE_CHANGED_NEW_AREA")
+	self:RegisterEvent("PLAYER_ENTERING_WORLD")
+	self:RegisterEvent("SUPER_TRACKED_QUEST_CHANGED")
 
 	local update = function() self:UpdatePOIs() end
 	hooksecurefunc("AddQuestWatch", update)
@@ -196,6 +198,7 @@ end
 ns.QUEST_POI_UPDATE = ns.UpdatePOIs
 ns.QUEST_LOG_UPDATE = ns.UpdatePOIs
 ns.ZONE_CHANGED_NEW_AREA = ns.UpdatePOIs
+ns.PLAYER_ENTERING_WORLD = ns.UpdatePOIs
 
 function ns:UpdateGlow()
 	QuestPOI_ClearSelection(ns.poi_parent)
@@ -277,13 +280,19 @@ do
 end
 
 function ns:UpdateEdges()
+	local superTrackedQuestId = GetSuperTrackedQuestID()
 	for id, poi in pairs(pois) do
+		-- ns.Debug("Considering poi", id, poi.questId, poi.active)
 		if poi.active then
 			if HBDPins:IsMinimapIconOnEdge(poi) then
 				if self.db.useArrows then
 					poi.poiButton:Hide()
-					poi.arrow:Show()
-					poi.arrow:SetAlpha(ns.db.arrowAlpha)
+					if superTrackedQuestId == poi.questId then
+						poi.arrow:Hide()
+					else
+						poi.arrow:Show()
+						poi.arrow:SetAlpha(ns.db.arrowAlpha)
+					end
 				else
 					poi.poiButton:Show()
 					poi.arrow:Hide()
@@ -302,6 +311,7 @@ function ns:UpdateEdges()
 		end
 	end
 end
+ns.SUPER_TRACKED_QUEST_CHANGED = ns.UpdateEdges
 
 -- This would be needed for switching to a different look when icons are on the edge of the minimap.
 C_Timer.NewTicker(1, function(...)
