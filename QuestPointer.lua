@@ -121,12 +121,7 @@ function ns:UpdatePOIs(...)
 		if questId then
 			local _, posX, posY, objective = QuestPOIGetIconInfo(questId)
 			if posX and posY and (IsQuestWatched(questLogIndex) or not self.db.watchedOnly) then
-				local title, level, suggestedGroup, isHeader, isCollapsed, isComplete, frequency, questID, startEvent, displayQuestID, isOnMap, hasLocalPOI, isTask, isStory = GetQuestLogTitle(questLogIndex)
-				if isComplete and isComplete < 0 then
-					isComplete = false
-				elseif numObjectives == 0 then
-					isComplete = true
-				end
+				local title, level, suggestedGroup, isHeader, isCollapsed, isComplete, frequency, questId, startEvent, displayQuestId, isOnMap, hasLocalPOI, isTask, isBounty, isStory = GetQuestLogTitle(questLogIndex)
 				self.Debug("POI", questId, posX, posY, objective, title, isComplete)
 
 				local poi = pois[i]
@@ -138,13 +133,13 @@ function ns:UpdatePOIs(...)
 					poi:SetScript("OnLeave", POI_OnLeave)
 					poi:SetScript("OnMouseUp", POI_OnMouseUp)
 					poi:EnableMouse(true)
-					
+
 					local arrow = CreateFrame("Frame", nil, poi)
 					arrow:SetPoint("CENTER", poi)
 					arrow:SetScript("OnUpdate", Arrow_OnUpdate)
 					arrow:SetWidth(32)
 					arrow:SetHeight(32)
-					
+
 					local arrowtexture = arrow:CreateTexture(nil, "OVERLAY")
 					arrowtexture:SetTexture([[Interface\Minimap\ROTATING-MINIMAPGUIDEARROW.tga]])
 					arrowtexture:SetAllPoints(arrow)
@@ -152,15 +147,15 @@ function ns:UpdatePOIs(...)
 					arrow.t = 0
 					arrow.poi = poi
 					arrow:Hide()
-					
+
 					poi.arrow = arrow
 				end
 
 				local poiButton
+				-- IsQuestComplete seems to test for "is quest in a turnable-in state?", distinct from IsQuestFlaggedCompleted...
+				isComplete = IsQuestComplete(questId)
 				if isComplete then
 					self.Debug("Making with QUEST_POI_COMPLETE_IN", i)
-					-- Using QUEST_POI_COMPLETE_SWAP gets the ? without any circle
-					-- Using QUEST_POI_COMPLETE_IN gets the ? in a brownish circle
 					numCompletedQuests = numCompletedQuests + 1
 					poiButton = QuestPOI_GetButton(ns.poi_parent, questId, hasLocalPOI and 'normal' or 'remote', numCompletedQuests, isStory)
 				else
