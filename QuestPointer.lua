@@ -131,9 +131,19 @@ function ns:UpdatePOIs(...)
 		Debug("Quest", questId, questLogIndex)
 		if questId then
 			local _, posX, posY, objective = QuestPOIGetIconInfo(questId)
-			if posX and posY and (IsQuestWatched(questLogIndex) or not self.db.watchedOnly) then
-				local title, level, suggestedGroup, isHeader, isCollapsed, isComplete, frequency, questId, startEvent, displayQuestId, isOnMap, hasLocalPOI, isTask, isBounty, isStory = GetQuestLogTitle(questLogIndex)
-				self.Debug("POI", questId, posX, posY, objective, title, isComplete)
+			local title, level, suggestedGroup, isHeader, isCollapsed, isComplete, frequency, questId, startEvent, displayQuestId, isOnMap, hasLocalPOI, isTask, isBounty, isStory = GetQuestLogTitle(questLogIndex)
+			-- IsQuestComplete seems to test for "is quest in a turnable-in state?", distinct from IsQuestFlaggedCompleted...
+			isComplete = IsQuestComplete(questId)
+			if not isTask then
+				self.Debug("Skipped POI", i, posX, posY)
+				if IsQuestComplete(questId) then
+					numCompletedQuests = numCompletedQuests + 1
+				else
+					numNumericQuests = numNumericQuests + 1
+				end
+			end
+			if posX and posY and (IsQuestWatched(questLogIndex) or not self.db.watchedOnly) and not isTask then
+				self.Debug("POI", questId, posX, posY, objective, title, hasLocalPOI, isTask)
 
 				local poi = pois[i]
 				if not poi then
@@ -163,15 +173,11 @@ function ns:UpdatePOIs(...)
 				end
 
 				local poiButton
-				-- IsQuestComplete seems to test for "is quest in a turnable-in state?", distinct from IsQuestFlaggedCompleted...
-				isComplete = IsQuestComplete(questId)
 				if isComplete then
-					self.Debug("Making with QUEST_POI_COMPLETE_IN", i)
-					numCompletedQuests = numCompletedQuests + 1
+					self.Debug("Making with complete", i)
 					poiButton = QuestPOI_GetButton(ns.poi_parent, questId, hasLocalPOI and 'normal' or 'remote', numCompletedQuests, isStory)
 				else
-					self.Debug("Making with QUEST_POI_NUMERIC", i - numCompletedQuests)
-					numNumericQuests = numNumericQuests + 1
+					self.Debug("Making with numeric", i - numCompletedQuests)
 					poiButton = QuestPOI_GetButton(ns.poi_parent, questId, hasLocalPOI and 'numeric' or 'remote', numNumericQuests, isStory)
 				end
 				poiButton:SetPoint("CENTER", poi)
@@ -196,8 +202,6 @@ function ns:UpdatePOIs(...)
 				HBDPins:AddMinimapIconMF(self, poi, m, f, posX, posY, true)
 				
 				pois[i] = poi
-			else
-				self.Debug("Skipped POI", i, posX, posY)
 			end
 		end
 	end
