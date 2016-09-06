@@ -241,6 +241,9 @@ end
 do
 	local tooltip = CreateFrame("GameTooltip", "QuestPointerTooltip", UIParent, "GameTooltipTemplate")
 	function POI_OnEnter(self)
+		if not self.questId then
+			return
+		end
 		if UIParent:IsVisible() then
 			tooltip:SetParent(UIParent)
 		else
@@ -248,11 +251,7 @@ do
 		end
 		
 		tooltip:SetOwner(self, "ANCHOR_BOTTOMLEFT")
-		
-		local link = GetQuestLink(self.questLogIndex)
-		if link then
-			tooltip:SetHyperlink(link)
-		end
+		tooltip:SetHyperlink("quest:" .. self.questId)
 	end
 	
 	function POI_OnLeave(self)
