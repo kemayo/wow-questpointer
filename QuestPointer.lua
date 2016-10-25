@@ -27,6 +27,7 @@ function ns:ADDON_LOADED(event, addon)
 	self:RegisterEvent("ZONE_CHANGED_NEW_AREA")
 	self:RegisterEvent("PLAYER_ENTERING_WORLD")
 	self:RegisterEvent("SUPER_TRACKED_QUEST_CHANGED")
+	self:RegisterEvent("QUEST_WATCH_LIST_CHANGED")
 
 	local update = function() self:UpdatePOIs() end
 	hooksecurefunc("AddQuestWatch", update)
@@ -90,8 +91,12 @@ end
 
 function ns:UpdatePOIs(...)
 	self.Debug("UpdatePOIs", ...)
-	
-	if WorldMapFrame:IsVisible() then
+
+	local x, y, m, f = HBD:GetPlayerZonePosition()
+	if not (m and f and x and y) then
+		-- Means that this was probably a change triggered by the world map being
+		-- opened and browsed around. Since this is the case, we won't update any POIs for now.
+		self.Debug("Skipped UpdatePOIs because of no player position")
 		return
 	end
 
@@ -104,14 +109,6 @@ function ns:UpdatePOIs(...)
 		end
 		poi.arrow:Hide()
 		poi.active = false
-	end
-
-	local x, y, m, f = HBD:GetPlayerZonePosition()
-	if not (m and f and x and y) then
-		-- Means that this was probably a change triggered by the world map being
-		-- opened and browsed around. Since this is the case, we won't update any POIs for now.
-		self.Debug("Skipped UpdatePOIs because of no player position")
-		return
 	end
 
 	local oldZone = GetCurrentMapAreaID()
@@ -216,6 +213,7 @@ ns.QUEST_POI_UPDATE = ns.UpdatePOIs
 ns.QUEST_LOG_UPDATE = ns.UpdatePOIs
 ns.ZONE_CHANGED_NEW_AREA = ns.UpdatePOIs
 ns.PLAYER_ENTERING_WORLD = ns.UpdatePOIs
+ns.QUEST_WATCH_LIST_CHANGED = ns.UpdatePOIs
 
 function ns:UpdateGlow()
 	QuestPOI_ClearSelection(ns.poi_parent)
