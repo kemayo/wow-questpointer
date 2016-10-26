@@ -92,11 +92,16 @@ end
 function ns:UpdatePOIs(...)
 	self.Debug("UpdatePOIs", ...)
 
+	local oldZone = GetCurrentMapAreaID()
 	local x, y, m, f = HBD:GetPlayerZonePosition()
 	if not (m and f and x and y) then
 		-- Means that this was probably a change triggered by the world map being
 		-- opened and browsed around. Since this is the case, we won't update any POIs for now.
 		self.Debug("Skipped UpdatePOIs because of no player position")
+		return
+	end
+	if WorldMapFrame:IsVisible() and oldZone ~= m then
+		self.Debug("Skipped UpdatePOIs because map is open and not viewing current zone")
 		return
 	end
 
@@ -111,7 +116,6 @@ function ns:UpdatePOIs(...)
 		poi.active = false
 	end
 
-	local oldZone = GetCurrentMapAreaID()
 	SetMapToCurrentZone()
 
 	local cvar = GetCVarBool("questPOI")
