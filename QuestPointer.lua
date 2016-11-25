@@ -93,6 +93,7 @@ function ns:UpdatePOIs(...)
 	self.Debug("UpdatePOIs", ...)
 
 	local oldZone = GetCurrentMapAreaID()
+	local oldFloor = GetCurrentMapDungeonLevel()
 	local x, y, zone, floor, mapFile, isMicro = HBD:GetPlayerZonePosition()
 	if not (zone and floor and x and y) then
 		-- Means that this was probably a change triggered by the world map being
@@ -209,6 +210,7 @@ function ns:UpdatePOIs(...)
 	end
 
 	SetMapByID(oldZone)
+	SetDungeonMapLevel(oldFloor)
 	SetCVar("questPOI", cvar and 1 or 0)
 
 	self:UpdateEdges()
