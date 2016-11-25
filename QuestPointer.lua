@@ -93,14 +93,15 @@ function ns:UpdatePOIs(...)
 	self.Debug("UpdatePOIs", ...)
 
 	local oldZone = GetCurrentMapAreaID()
-	local x, y, m, f = HBD:GetPlayerZonePosition()
-	if not (m and f and x and y) then
+	local x, y, zone, floor, mapFile, isMicro = HBD:GetPlayerZonePosition()
+	if not (zone and floor and x and y) then
 		-- Means that this was probably a change triggered by the world map being
 		-- opened and browsed around. Since this is the case, we won't update any POIs for now.
 		self.Debug("Skipped UpdatePOIs because of no player position")
 		return
 	end
-	if WorldMapFrame:IsVisible() and oldZone ~= m then
+	if WorldMapFrame:IsVisible() and (oldZone ~= zone or isMicro) then
+		-- TODO: handle microdungeons
 		self.Debug("Skipped UpdatePOIs because map is open and not viewing current zone")
 		return
 	end
@@ -192,15 +193,15 @@ function ns:UpdatePOIs(...)
 				poi.index = i
 				poi.questId = questId
 				poi.questLogIndex = questLogIndex
-				poi.m = m
-				poi.f = f
+				poi.m = zone
+				poi.f = floor
 				poi.x = posX
 				poi.y = posY
 				poi.title = title
 				poi.active = true
 				poi.complete = isComplete
 				
-				HBDPins:AddMinimapIconMF(self, poi, m, f, posX, posY, true)
+				HBDPins:AddMinimapIconMF(self, poi, zone, floor, posX, posY, true)
 				
 				pois[i] = poi
 			end
