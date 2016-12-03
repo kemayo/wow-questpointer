@@ -197,7 +197,7 @@ function ns:UpdateWorldPOIs(zone, floor)
 	local numTaskPOIs = #taskInfo
 	local taskIconIndex = 0
 	for i, info  in ipairs(taskInfo) do
-		if HaveQuestData(info.questId) and QuestUtils_IsQuestWorldQuest(info.questId) and (not ns.db.watchedOnly or IsWorldQuestWatched(info.questId)) then
+		if HaveQuestData(info.questId) and QuestUtils_IsQuestWorldQuest(info.questId) and (not ns.db.watchedOnly or self:WorldQuestIsWatched(info.questId)) then
 			local id = 'QPWQ' .. taskIconIndex
 			local poiButton = WorldMap_TryCreatingWorldQuestPOI(info, id)
 
@@ -224,6 +224,19 @@ function ns:UpdateWorldPOIs(zone, floor)
 	end
 end
 
+function ns:WorldQuestIsWatched(questId)
+	if IsWorldQuestWatched(questId) or IsWorldQuestHardWatched(questId) then
+		return true
+	end
+	-- tasks we're currently in the area of count as "watched" for our purposes
+	local tasks = GetTasksTable()
+	for i, taskId in ipairs(tasks) do
+		if taskId == questId then
+			return true
+		end
+	end
+	return false
+end
 
 function ns:GetPOI(id, button)
 	local poi = pois[id]
