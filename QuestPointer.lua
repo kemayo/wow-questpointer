@@ -14,6 +14,7 @@ ns.defaults = {
 	useArrows = false,
 	fadeEdge = true,
 	autoTomTom = false,
+	worldQuest = true,
 }
 ns.defaultsPC = {}
 
@@ -71,7 +72,7 @@ ns.pois = pois
 
 function ns:ClosestPOI(all)
 	local closest, closest_distance, poi_distance, _
-	for k,poi in pairs(ns.pois) do
+	for id, poi in pairs(ns.pois) do
 		if poi.active then
 			_, poi_distance = HBDPins:GetVectorToIcon(poi)
 			
@@ -108,23 +109,32 @@ function ns:UpdatePOIs(...)
 	end
 
 	for id, poi in pairs(pois) do
-		HBDPins:RemoveMinimapIcon(self, poi)
-		if poi.poiButton then
-			poi.poiButton:Hide()
-			poi.poiButton:SetParent(Minimap)
-			poi.poiButton = nil
-		end
-		poi.arrow:Hide()
-		poi.active = false
+		self:ResetPOI(poi)
 	end
 
 	SetMapToCurrentZone()
 
+	self:UpdateLogPOIs(zone, floor)
+	self:UpdateWorldPOIs(zone, floor)
+
+	SetMapByID(oldZone)
+	SetDungeonMapLevel(oldFloor)
+
+	self:UpdateEdges()
+	self:UpdateGlow()
+end
+ns.QUEST_POI_UPDATE = ns.UpdatePOIs
+ns.QUEST_LOG_UPDATE = ns.UpdatePOIs
+ns.ZONE_CHANGED_NEW_AREA = ns.UpdatePOIs
+ns.PLAYER_ENTERING_WORLD = ns.UpdatePOIs
+ns.QUEST_WATCH_LIST_CHANGED = ns.UpdatePOIs
+
+function ns:UpdateLogPOIs(zone, floor)
 	local cvar = GetCVarBool("questPOI")
 	SetCVar("questPOI", 1)
 	-- Interestingly, even if this isn't called, *some* POIs will show up. Not sure why.
 	QuestPOIUpdateIcons()
-	
+
 	local numNumericQuests = 0
 	local numCompletedQuests = 0
 	local numEntries = QuestMapUpdateAllQuests()
@@ -145,89 +155,170 @@ function ns:UpdatePOIs(...)
 					numNumericQuests = numNumericQuests + 1
 				end
 			end
-			if posX and posY and (IsQuestWatched(questLogIndex) or not self.db.watchedOnly) and not isTask then
+			if hasLocalPOI and posX and posY and (not self.db.watchedOnly or IsQuestWatched(questLogIndex)) and not isTask then
 				self.Debug("POI", questId, posX, posY, objective, title, hasLocalPOI, isTask)
-
-				local poi = pois[i]
-				if not poi then
-					poi = CreateFrame("Frame", "QuestPointerPOI"..i, Minimap)
-					poi:SetWidth(10)
-					poi:SetHeight(10)
-					poi:SetScript("OnEnter", POI_OnEnter)
-					poi:SetScript("OnLeave", POI_OnLeave)
-					poi:SetScript("OnMouseUp", POI_OnMouseUp)
-					poi:EnableMouse(true)
-
-					local arrow = CreateFrame("Frame", nil, poi)
-					arrow:SetPoint("CENTER", poi)
-					arrow:SetScript("OnUpdate", Arrow_OnUpdate)
-					arrow:SetWidth(32)
-					arrow:SetHeight(32)
-
-					local arrowtexture = arrow:CreateTexture(nil, "OVERLAY")
-					arrowtexture:SetTexture([[Interface\Minimap\ROTATING-MINIMAPGUIDEARROW.tga]])
-					arrowtexture:SetAllPoints(arrow)
-					arrow.texture = arrowtexture
-					arrow.t = 0
-					arrow.poi = poi
-					arrow:Hide()
-
-					poi.arrow = arrow
-				end
 
 				local poiButton
 				if isComplete then
 					self.Debug("Making with complete", i)
-					poiButton = QuestPOI_GetButton(ns.poi_parent, questId, hasLocalPOI and 'normal' or 'remote', numCompletedQuests, isStory)
+					poiButton = QuestPOI_GetButton(ns.poi_parent, questId, hasLocalPOI and 'normal' or 'remote', numCompletedQuests)
 				else
 					self.Debug("Making with numeric", i - numCompletedQuests)
-					poiButton = QuestPOI_GetButton(ns.poi_parent, questId, hasLocalPOI and 'numeric' or 'remote', numNumericQuests, isStory)
+					poiButton = QuestPOI_GetButton(ns.poi_parent, questId, hasLocalPOI and 'numeric' or 'remote', numNumericQuests)
 				end
-				poiButton:SetPoint("CENTER", poi)
-				poiButton:SetScale(self.db.iconScale)
-				poiButton:SetParent(poi)
-				poiButton:EnableMouse(false)
-				poi.poiButton = poiButton
-				
-				poi.arrow:SetScale(self.db.arrowScale)
-				
+
+				local poi = self:GetPOI('QPL' .. i, poiButton)
+
 				poi.index = i
 				poi.questId = questId
-				poi.questLogIndex = questLogIndex
 				poi.m = zone
 				poi.f = floor
 				poi.x = posX
 				poi.y = posY
-				poi.title = title
 				poi.active = true
 				poi.complete = isComplete
-				
+
 				HBDPins:AddMinimapIconMF(self, poi, zone, floor, posX, posY, true)
-				
-				pois[i] = poi
 			end
 		end
 	end
 
-	SetMapByID(oldZone)
-	SetDungeonMapLevel(oldFloor)
 	SetCVar("questPOI", cvar and 1 or 0)
-
-	self:UpdateEdges()
-	self:UpdateGlow()
 end
-ns.QUEST_POI_UPDATE = ns.UpdatePOIs
-ns.QUEST_LOG_UPDATE = ns.UpdatePOIs
-ns.ZONE_CHANGED_NEW_AREA = ns.UpdatePOIs
-ns.PLAYER_ENTERING_WORLD = ns.UpdatePOIs
-ns.QUEST_WATCH_LIST_CHANGED = ns.UpdatePOIs
 
-function ns:UpdateGlow()
-	QuestPOI_ClearSelection(ns.poi_parent)
-	local closest = self:ClosestPOI()
-	if closest then
-		-- closest.poiButton.selectionGlow:Show()
-		QuestPOI_SelectButton(closest.poiButton)
+function ns:UpdateWorldPOIs(zone, floor)
+	if not ns.db.worldQuest then
+		return
+	end
+	local taskInfo = C_TaskQuest.GetQuestsForPlayerByMapID(zone)
+	if taskInfo == nil or #taskInfo == 0 then
+		return
+	end
+	local numTaskPOIs = #taskInfo
+	local taskIconIndex = 0
+	for i, info  in ipairs(taskInfo) do
+		if HaveQuestData(info.questId) and QuestUtils_IsQuestWorldQuest(info.questId) and (not ns.db.watchedOnly or IsWorldQuestWatched(info.questId)) then
+			local id = 'QPWQ' .. taskIconIndex
+			local poiButton = WorldMap_TryCreatingWorldQuestPOI(info, id)
+
+			if poiButton then
+				local poi = self:GetPOI(id, poiButton)
+				poiButton.questID = info.questId
+				poiButton.numObjectives = info.numObjectives
+
+				taskIconIndex = taskIconIndex + 1
+
+				poi.index = i
+				poi.questId = info.questId
+				poi.m = zone
+				poi.f = info.floor
+				poi.x = info.x
+				poi.y = info.y
+				poi.active = true
+				poi.worldquest = true
+				poi.complete = false -- world quests vanish when complete, so...
+
+				HBDPins:AddMinimapIconMF(self, poi, zone, info.floor, info.x, info.y, true)
+			end
+		end
+	end
+end
+
+
+function ns:GetPOI(id, button)
+	local poi = pois[id]
+	if not poi then
+		poi = CreateFrame("Frame", "QuestPointerPOI" .. id, Minimap)
+		poi:SetWidth(10)
+		poi:SetHeight(10)
+		poi:SetScript("OnEnter", POI_OnEnter)
+		poi:SetScript("OnLeave", POI_OnLeave)
+		poi:SetScript("OnMouseUp", POI_OnMouseUp)
+		poi:EnableMouse(true)
+
+		local arrow = CreateFrame("Frame", nil, poi)
+		arrow:SetPoint("CENTER", poi)
+		arrow:SetScript("OnUpdate", Arrow_OnUpdate)
+		arrow:SetWidth(32)
+		arrow:SetHeight(32)
+
+		local arrowtexture = arrow:CreateTexture(nil, "OVERLAY")
+		arrowtexture:SetTexture([[Interface\Minimap\ROTATING-MINIMAPGUIDEARROW.tga]])
+		arrowtexture:SetAllPoints(arrow)
+		arrow.texture = arrowtexture
+		arrow.t = 0
+		arrow.poi = poi
+		arrow:Hide()
+
+		poi.arrow = arrow
+
+		pois[id] = poi
+	end
+
+	button:SetPoint("CENTER", poi)
+	button:SetScale(self.db.iconScale)
+	button:SetParent(poi)
+	button:EnableMouse(false)
+	poi.poiButton = button
+
+	poi.arrow:SetScale(self.db.arrowScale)
+
+	return poi
+end
+function ns:ResetPOI(poi)
+	HBDPins:RemoveMinimapIcon(self, poi)
+	if poi.poiButton then
+		poi.poiButton:Hide()
+		poi.poiButton:SetParent(Minimap)
+		poi.poiButton = nil
+	end
+	poi.arrow:Hide()
+	poi.active = false
+end
+
+do
+	local selected
+	function ns:UpdateGlow()
+		selected = self:ClearSelection(selected)
+		selected = self:SetSelection(self:ClosestPOI())
+		if closest then
+			selected = closest
+
+			if closest.poiButton.poiParent then
+				QuestPOI_SelectButton(closest.poiButton)
+			else
+				closest.poiButton.SelectedGlow:SetShown(true)
+			end
+		end
+	end
+	function ns:SetSelection(poi)
+		if not poi then return end
+		if poi.worldquest then
+			local tagID, tagName, worldQuestType, rarity, isElite, tradeskillLineIndex = GetQuestTagInfo(poi.questId)
+			if rarity == LE_WORLD_QUEST_QUALITY_COMMON then
+				-- this is cloning a bunch of ApplyStandardTexturesToPOI, which is local to WorldMapFrame.lua
+				poi.poiButton:GetNormalTexture():SetTexCoord(0.500, 0.625, 0.375, 0.5)
+				poi.poiButton:GetPushedTexture():SetTexCoord(0.375, 0.500, 0.375, 0.5)
+			else
+				poi.poiButton.SelectedGlow:SetShown(true)
+			end
+		else
+			QuestPOI_SelectButton(poi.poiButton)
+		end
+		return poi
+	end
+	function ns:ClearSelection(poi)
+		if (not poi) or (not poi.active) then return end
+		if poi.worldquest then
+			poi.poiButton.SelectedGlow:SetShown(false)
+			local tagID, tagName, worldQuestType, rarity, isElite, tradeskillLineIndex = GetQuestTagInfo(poi.questId)
+			if rarity == LE_WORLD_QUEST_QUALITY_COMMON then
+				poi.poiButton:GetNormalTexture():SetTexCoord(0.875, 1, 0.375, 0.5)
+				poi.poiButton:GetPushedTexture():SetTexCoord(0.750, 0.875, 0.375, 0.5)
+			end
+		else
+			QuestPOI_ClearSelection(ns.poi_parent)
+		end
 	end
 end
 

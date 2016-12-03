@@ -18,8 +18,18 @@ frame.name = myfullname
 frame:Hide()
 frame:SetScript("OnShow", function(frame)
 	local title, subtitle = LibStub("tekKonfig-Heading").new(frame, myfullname, ("General settings for %s."):format(myfullname))
-	
-	local tracked = tekcheck.new(frame, nil, "Tracked quests only", "TOPLEFT", subtitle, "BOTTOMLEFT", -2, -GAP)
+
+	local worldQuest = tekcheck.new(frame, nil, "Include world quests", "TOPLEFT", subtitle, "BOTTOMLEFT", -2, -GAP)
+	worldQuest.tiptext = "Only show icons on the minimap for quests you are tracking"
+	local checksound = worldQuest:GetScript("OnClick")
+	worldQuest:SetScript("OnClick", function(self)
+		checksound(self)
+		ns.db.worldQuest = not ns.db.worldQuest
+		ns:UpdatePOIs()
+	end)
+	worldQuest:SetChecked(ns.db.worldQuest)
+
+	local tracked = tekcheck.new(frame, nil, "Tracked quests only", "TOPLEFT", worldQuest, "BOTTOMLEFT", -2, -GAP)
 	tracked.tiptext = "Only show icons on the minimap for quests you are tracking"
 	local checksound = tracked:GetScript("OnClick")
 	tracked:SetScript("OnClick", function(self)
