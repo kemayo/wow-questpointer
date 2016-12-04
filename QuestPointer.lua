@@ -171,6 +171,7 @@ function ns:UpdateLogPOIs(zone, floor)
 
 				poi.index = i
 				poi.questId = questId
+				poi.title = title
 				poi.m = zone
 				poi.f = floor
 				poi.x = posX
@@ -210,6 +211,7 @@ function ns:UpdateWorldPOIs(zone, floor)
 
 				poi.index = i
 				poi.questId = info.questId
+				poi.title = C_TaskQuest.GetQuestInfoByQuestID(info.questID)
 				poi.m = zone
 				poi.f = info.floor
 				poi.x = info.x
