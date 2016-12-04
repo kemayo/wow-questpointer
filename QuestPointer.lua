@@ -211,7 +211,7 @@ function ns:UpdateWorldPOIs(zone, floor)
 
 				poi.index = i
 				poi.questId = info.questId
-				poi.title = C_TaskQuest.GetQuestInfoByQuestID(info.questID)
+				poi.title = C_TaskQuest.GetQuestInfoByQuestID(info.questId)
 				poi.m = zone
 				poi.f = info.floor
 				poi.x = info.x
