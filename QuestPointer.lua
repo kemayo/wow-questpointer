@@ -2,8 +2,8 @@ local myname, ns = ...
 local myfullname = GetAddOnMetadata(myname, "Title")
 local Debug = ns.Debug
 
-local HBD = LibStub("HereBeDragons-1.0")
-local HBDPins = LibStub("HereBeDragons-Pins-1.0")
+local HBD = LibStub("HereBeDragons-2.0")
+local HBDPins = LibStub("HereBeDragons-Pins-2.0")
 
 ns.defaults = {
 	iconScale = 0.7,
@@ -93,16 +93,14 @@ end
 function ns:UpdatePOIs(...)
 	self.Debug("UpdatePOIs", ...)
 
-	local oldZone = GetCurrentMapAreaID()
-	local oldFloor = GetCurrentMapDungeonLevel()
-	local x, y, zone, floor, mapFile, isMicro = HBD:GetPlayerZonePosition()
-	if not (zone and floor and x and y) then
+	local x, y, mapid, maptype = HBD:GetPlayerZonePosition()
+	if not (mapid and x and y) then
 		-- Means that this was probably a change triggered by the world map being
 		-- opened and browsed around. Since this is the case, we won't update any POIs for now.
 		self.Debug("Skipped UpdatePOIs because of no player position")
 		return
 	end
-	if WorldMapFrame:IsVisible() and (oldZone ~= zone or isMicro) then
+	if WorldMapFrame:IsVisible() then
 		-- TODO: handle microdungeons
 		self.Debug("Skipped UpdatePOIs because map is open and not viewing current zone")
 		return
@@ -112,13 +110,8 @@ function ns:UpdatePOIs(...)
 		self:ResetPOI(poi)
 	end
 
-	SetMapToCurrentZone()
-
-	self:UpdateLogPOIs(zone, floor)
-	self:UpdateWorldPOIs(zone, floor)
-
-	SetMapByID(oldZone)
-	SetDungeonMapLevel(oldFloor)
+	self:UpdateLogPOIs(mapid, floor)
+	self:UpdateWorldPOIs(mapid, floor)
 
 	self:UpdateEdges()
 	self:UpdateGlow()
@@ -129,7 +122,7 @@ ns.ZONE_CHANGED_NEW_AREA = ns.UpdatePOIs
 ns.PLAYER_ENTERING_WORLD = ns.UpdatePOIs
 ns.QUEST_WATCH_LIST_CHANGED = ns.UpdatePOIs
 
-function ns:UpdateLogPOIs(zone, floor)
+function ns:UpdateLogPOIs(mapid, floor)
 	local cvar = GetCVarBool("questPOI")
 	SetCVar("questPOI", 1)
 	-- Interestingly, even if this isn't called, *some* POIs will show up. Not sure why.
@@ -172,14 +165,13 @@ function ns:UpdateLogPOIs(zone, floor)
 				poi.index = i
 				poi.questId = questId
 				poi.title = title
-				poi.m = zone
-				poi.f = floor
+				poi.m = mapid
 				poi.x = posX
 				poi.y = posY
 				poi.active = true
 				poi.complete = isComplete
 
-				HBDPins:AddMinimapIconMF(self, poi, zone, floor, posX, posY, true)
+				HBDPins:AddMinimapIconMap(self, poi, mapid, posX, posY, false, true)
 			end
 		end
 	end
@@ -187,11 +179,11 @@ function ns:UpdateLogPOIs(zone, floor)
 	SetCVar("questPOI", cvar and 1 or 0)
 end
 
-function ns:UpdateWorldPOIs(zone, floor)
+function ns:UpdateWorldPOIs(mapid, floor)
 	if not ns.db.worldQuest then
 		return
 	end
-	local taskInfo = C_TaskQuest.GetQuestsForPlayerByMapID(zone)
+	local taskInfo = C_TaskQuest.GetQuestsForPlayerByMapID(mapid)
 	if taskInfo == nil or #taskInfo == 0 then
 		return
 	end
@@ -212,15 +204,14 @@ function ns:UpdateWorldPOIs(zone, floor)
 				poi.index = i
 				poi.questId = info.questId
 				poi.title = C_TaskQuest.GetQuestInfoByQuestID(info.questId)
-				poi.m = zone
-				poi.f = info.floor
+				poi.m = mapid
 				poi.x = info.x
 				poi.y = info.y
 				poi.active = true
 				poi.worldquest = true
 				poi.complete = false -- world quests vanish when complete, so...
 
-				HBDPins:AddMinimapIconMF(self, poi, zone, info.floor, info.x, info.y, true)
+				HBDPins:AddMinimapIconMF(self, poi, mapid, info.x, info.y, false, true)
 			end
 		end
 	end
