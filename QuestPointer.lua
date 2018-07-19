@@ -448,12 +448,7 @@ do
 	end
 	
 	function POI_OnMouseUp(self)
-		ShowUIPanel(WorldMapFrame)
-		local frame = _G["WorldMapQuestFrame"..self.index]
-		if not frame then
-			return
-		end
-		WorldMapFrame_SelectQuestFrame(frame)
+		QuestMapFrame_OpenToQuestDetails(self.questId)
 	end
 	
 	local square_half = math.sqrt(0.5)
