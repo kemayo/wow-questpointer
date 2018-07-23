@@ -42,18 +42,17 @@ do
 	function ns:TomTomClosestPOI()
 		local closest = ns:ClosestPOI()
 		if closest then
-			if not (closest.questId == last_waypoint.questId and closest.m == last_waypoint.m and closest.z == last_waypoint.z and closest.x == last_waypoint.x and closest.y == last_waypoint.y) then
+			if not (closest.questId == last_waypoint.questId and closest.m == last_waypoint.m and closest.x == last_waypoint.x and closest.y == last_waypoint.y) then
 				if tomtompoint then
 					tomtompoint = TomTom:RemoveWaypoint(tomtompoint)
 				end
 				Debug("Making new tomtom waypoint", closest.questId, closest.title)
 				tomtomopts.title = closest.title
-				tomtompoint = TomTom:AddMFWaypoint(closest.m, closest.f, closest.x, closest.y, tomtomopts)
+				tomtompoint = TomTom:AddWaypoint(closest.m, closest.x, closest.y, tomtomopts)
 
 				last_waypoint = table.wipe(last_waypoint)
 				last_waypoint.questId = closest.questId
 				last_waypoint.m = closest.m
-				last_waypoint.f = closest.f
 				last_waypoint.x = closest.x
 				last_waypoint.y = closest.y
 			end
