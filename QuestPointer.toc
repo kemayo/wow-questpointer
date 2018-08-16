@@ -18,18 +18,7 @@
 ## X-LoadOn-Always: delayed
 ## X-LoadOn-Slash: /questpointer
 
-lib\LibStub.lua
-lib\CallbackHandler-1.0\CallbackHandler-1.0.xml
-
-lib\LibDataBroker-1.1\LibDataBroker-1.1.lua
-
-lib\HereBeDragons\HereBeDragons-2.0.lua
-lib\HereBeDragons\HereBeDragons-Pins-2.0.lua
-
-lib\tekKonfigAboutPanel.lua
-lib\tekKonfigHeading.lua
-lib\tekKonfigSlider.lua
-lib\tekKonfigCheckbox.lua
+embeds.xml
 
 #template\Locale.lua
 template\Database.lua
