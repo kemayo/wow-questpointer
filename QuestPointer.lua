@@ -27,12 +27,12 @@ function ns:ADDON_LOADED(event, addon)
 	self:RegisterEvent("QUEST_LOG_UPDATE")
 	self:RegisterEvent("ZONE_CHANGED_NEW_AREA")
 	self:RegisterEvent("PLAYER_ENTERING_WORLD")
-	self:RegisterEvent("SUPER_TRACKED_QUEST_CHANGED")
+	self:RegisterEvent("SUPER_TRACKING_CHANGED")
 	self:RegisterEvent("QUEST_WATCH_LIST_CHANGED")
 
 	local update = function() self:UpdatePOIs() end
-	hooksecurefunc("AddQuestWatch", update)
-	hooksecurefunc("RemoveQuestWatch", update)
+	hooksecurefunc(C_QuestLog, "AddQuestWatch", update)
+	hooksecurefunc(C_QuestLog, "RemoveQuestWatch", update)
 
 	LibStub("tekKonfig-AboutPanel").new(myfullname, myname) -- Make first arg nil if no parent config panel
 
@@ -131,49 +131,54 @@ function ns:UpdateLogPOIs(mapid, floor)
 
 	local numNumericQuests = 0
 	local numCompletedQuests = 0
-	local numEntries = QuestMapUpdateAllQuests()
+	local numPois = QuestMapUpdateAllQuests()
+	local questPois = {}
 	Debug("Quests on map", numEntries)
-	for i=1, numEntries do
-		local questId, questLogIndex = QuestPOIGetQuestIDByVisibleIndex(i)
-		Debug("Quest", questId, questLogIndex)
-		if questId then
-			local _, posX, posY, objective = QuestPOIGetIconInfo(questId)
-			local title, level, suggestedGroup, isHeader, isCollapsed, isComplete, frequency, questId, startEvent, displayQuestId, isOnMap, hasLocalPOI, isTask, isBounty, isStory = GetQuestLogTitle(questLogIndex)
-			-- IsQuestComplete seems to test for "is quest in a turnable-in state?", distinct from IsQuestFlaggedCompleted...
-			isComplete = IsQuestComplete(questId)
-			if not isTask then
-				self.Debug("Skipped POI", i, posX, posY)
-				if IsQuestComplete(questId) then
-					numCompletedQuests = numCompletedQuests + 1
-				else
-					numNumericQuests = numNumericQuests + 1
-				end
+	if ( numPois > 0 and GetCVarBool("questPOI") ) then
+		GetQuestPOIs(questPois)
+	end
+	for i, questId in ipairs(questPois) do
+		Debug("Quest", questId)
+		local _, posX, posY, objective = QuestPOIGetIconInfo(questId)
+		-- local title, level, suggestedGroup, isHeader, isCollapsed, isComplete, frequency, questId, startEvent, displayQuestId, isOnMap, hasLocalPOI, isTask, isBounty, isStory = GetQuestLogTitle(questLogIndex)
+		local isOnMap = C_QuestLog.IsOnMap(questId)
+		local isTask = C_QuestLog.IsQuestTask(questId)
+		-- IsQuestComplete seems to test for "is quest in a turnable-in state?", distinct from IsQuestFlaggedCompleted...
+		isComplete = C_QuestLog.IsComplete(questId)
+		if not isTask then
+			self.Debug("Skipped POI", i, posX, posY)
+			if isComplete then
+				numCompletedQuests = numCompletedQuests + 1
+			else
+				numNumericQuests = numNumericQuests + 1
 			end
-			if hasLocalPOI and posX and posY and (not self.db.watchedOnly or IsQuestWatched(questLogIndex)) and not isTask then
-				self.Debug("POI", questId, posX, posY, objective, title, hasLocalPOI, isTask)
+		end
+		if isOnMap and posX and posY and (not self.db.watchedOnly or C_QuestLog.GetQuestWatchType(questId)) and not isTask then
+			local title = C_QuestLog.GetTitleForQuestID(questId)
 
-				local poiButton
-				if isComplete then
-					self.Debug("Making with complete", i)
-					poiButton = QuestPOI_GetButton(ns.poi_parent, questId, hasLocalPOI and 'normal' or 'remote', numCompletedQuests)
-				else
-					self.Debug("Making with numeric", i - numCompletedQuests)
-					poiButton = QuestPOI_GetButton(ns.poi_parent, questId, hasLocalPOI and 'numeric' or 'remote', numNumericQuests)
-				end
+			self.Debug("POI", questId, posX, posY, objective, title, isOnMap, isTask)
 
-				local poi = self:GetPOI('QPL' .. i, poiButton)
-
-				poi.index = i
-				poi.questId = questId
-				poi.title = title
-				poi.m = mapid
-				poi.x = posX
-				poi.y = posY
-				poi.active = true
-				poi.complete = isComplete
-
-				HBDPins:AddMinimapIconMap(self, poi, mapid, posX, posY, false, true)
+			local poiButton
+			if isComplete then
+				self.Debug("Making with complete", i)
+				poiButton = QuestPOI_GetButton(ns.poi_parent, questId, isOnMap and 'normal' or 'remote', numCompletedQuests)
+			else
+				self.Debug("Making with numeric", i - numCompletedQuests)
+				poiButton = QuestPOI_GetButton(ns.poi_parent, questId, isOnMap and 'numeric' or 'remote', numNumericQuests)
 			end
+
+			local poi = self:GetPOI('QPL' .. i, poiButton)
+
+			poi.index = i
+			poi.questId = questId
+			poi.title = title
+			poi.m = mapid
+			poi.x = posX
+			poi.y = posY
+			poi.active = true
+			poi.complete = isComplete
+
+			HBDPins:AddMinimapIconMap(self, poi, mapid, posX, posY, false, true)
 		end
 	end
 
@@ -245,12 +250,13 @@ do
 		poiButton.dataProvider = fauxDataProvider
 		poiButton.scaleFactor = 0.4
 
-		local tagID, tagName, worldQuestType, rarity, isElite, tradeskillLineIndex, displayTimeLeft = GetQuestTagInfo(info.questId)
-		local tradeskillLineID = tradeskillLineIndex and select(7, GetProfessionInfo(tradeskillLineIndex))
+		local tagInfo = C_QuestLog.GetQuestTagInfo(info.questId)
+		-- local tagID, tagName, worldQuestType, rarity, isElite, tradeskillLineIndex, displayTimeLeft = GetQuestTagInfo(info.questId)
+		local tradeskillLineID = tagInfo.tradeskillLineID and select(7, GetProfessionInfo(tagInfo.tradeskillLineID))
 
-		poiButton.worldQuestType = worldQuestType
+		poiButton.worldQuestType = tagInfo.worldQuestType
 
-		if rarity ~= LE_WORLD_QUEST_QUALITY_COMMON then
+		if tagInfo.quality ~= Enum.WorldQuestQuality.Common then
 			poiButton.Background:SetTexCoord(0, 1, 0, 1);
 			poiButton.PushedBackground:SetTexCoord(0, 1, 0, 1);
 			poiButton.Highlight:SetTexCoord(0, 1, 0, 1);
@@ -260,12 +266,12 @@ do
 			poiButton.Highlight:SetSize(45, 45);
 			poiButton.SelectedGlow:SetSize(45, 45);
 
-			if rarity == LE_WORLD_QUEST_QUALITY_RARE then
+			if tagInfo.quality == Enum.WorldQuestQuality.Rare then
 				poiButton.Background:SetAtlas("worldquest-questmarker-rare");
 				poiButton.PushedBackground:SetAtlas("worldquest-questmarker-rare-down");
 				poiButton.Highlight:SetAtlas("worldquest-questmarker-rare");
 				poiButton.SelectedGlow:SetAtlas("worldquest-questmarker-rare");
-			elseif rarity == LE_WORLD_QUEST_QUALITY_EPIC then
+			elseif tagInfo.quality == Enum.WorldQuestQuality.Epic then
 				poiButton.Background:SetAtlas("worldquest-questmarker-epic");
 				poiButton.PushedBackground:SetAtlas("worldquest-questmarker-epic-down");
 				poiButton.Highlight:SetAtlas("worldquest-questmarker-epic");
@@ -288,7 +294,7 @@ do
 		poiButton:RefreshVisuals()
 		-- ns:RefreshWorldQuestButton(poiButton)
 
-		if isElite then
+		if tagInfo.isElite then
 			poiButton.Underlay:SetAtlas("worldquest-questmarker-dragon");
 			poiButton.Underlay:Show();
 		else
@@ -384,9 +390,9 @@ do
 	function ns:SetSelection(poi)
 		if not poi then return end
 		if poi.worldquest then
-			local rarity = select(4, GetQuestTagInfo(poi.poiButton.questID))
+			local tagInfo = C_QuestLog.GetQuestTagInfo(poi.poiButton.questID)
 			-- override this bit from WorldQuestDataProvider.lua
-			if rarity == LE_WORLD_QUEST_QUALITY_COMMON then
+			if tagInfo.quality == Enum.WorldQuestQuality.Common then
 				poi.poiButton.Background:SetTexCoord(0.500, 0.625, 0.375, 0.5)
 				poi.poiButton.PushedBackground:SetTexCoord(0.375, 0.500, 0.375, 0.5)
 			else
@@ -401,8 +407,9 @@ do
 	function ns:ClearSelection(poi)
 		if (not poi) or (not poi.active) then return end
 		if poi.worldquest then
-			local rarity = select(4, GetQuestTagInfo(poi.poiButton.questID))
-			if rarity == LE_WORLD_QUEST_QUALITY_COMMON then
+			local tagInfo = C_QuestLog.GetQuestTagInfo(poi.poiButton.questID)
+			-- override this bit from WorldQuestDataProvider.lua
+			if tagInfo.quality == Enum.WorldQuestQuality.Common then
 				poi.poiButton.Background:SetTexCoord(0.875, 1, 0.375, 0.5)
 				poi.poiButton.PushedBackground:SetTexCoord(0.750, 0.875, 0.375, 0.5)
 			else
@@ -480,7 +487,7 @@ do
 end
 
 function ns:UpdateEdges()
-	local superTrackedQuestId = GetSuperTrackedQuestID()
+	local superTrackedQuestId = C_SuperTrack.GetSuperTrackedQuestID()
 	for id, poi in pairs(pois) do
 		-- ns.Debug("Considering poi", id, poi.questId, poi.active)
 		if poi.active then
@@ -511,7 +518,7 @@ function ns:UpdateEdges()
 		end
 	end
 end
-ns.SUPER_TRACKED_QUEST_CHANGED = ns.UpdateEdges
+ns.SUPER_TRACKING_CHANGED = ns.UpdateEdges
 
 -- This would be needed for switching to a different look when icons are on the edge of the minimap.
 C_Timer.NewTicker(1, function(...)
