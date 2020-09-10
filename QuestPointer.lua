@@ -242,6 +242,7 @@ do
 	local fauxDataProvider = {
 		GetBountyQuestID = function() return nil end,
 		IsMarkingActiveQuests = function() return true end,
+		ShouldHighlightInfo = function() return false end,
 	}
 	function ns:GetWorldQuestButton(info)
 		local poiButton = ns.wqpool:Acquire()
