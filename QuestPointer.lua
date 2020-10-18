@@ -470,6 +470,10 @@ do
 		self.t = 0
 		
 		local angle = HBDPins:GetVectorToIcon(self.poi)
+		if not angle then
+			-- Reports of this being nil right after hearthing. Can't reproduce, but it's an easy check.
+			return
+		end
 		angle = angle + rad_135
 
 		if GetCVar("rotateMinimap") == "1" then
