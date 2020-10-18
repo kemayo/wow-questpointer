@@ -5,8 +5,8 @@ local myfullname = GetAddOnMetadata(myname, "Title")
 --      Locals      --
 ----------------------
 
-local tekcheck = LibStub("tekKonfig-Checkbox")
-local tekslider = LibStub("tekKonfig-Slider")
+local tekcheck = LibStub("konfig-Checkbox")
+local tekslider = LibStub("konfig-Slider")
 local GAP = 8
 
 ---------------------
@@ -17,7 +17,7 @@ local frame = CreateFrame("Frame", nil, InterfaceOptionsFramePanelContainer)
 frame.name = myfullname
 frame:Hide()
 frame:SetScript("OnShow", function(frame)
-	local title, subtitle = LibStub("tekKonfig-Heading").new(frame, myfullname, ("General settings for %s."):format(myfullname))
+	local title, subtitle = LibStub("konfig-Heading").new(frame, myfullname, ("General settings for %s."):format(myfullname))
 
 	local worldQuest = tekcheck.new(frame, nil, "Include world quests", "TOPLEFT", subtitle, "BOTTOMLEFT", -2, -GAP)
 	worldQuest.tiptext = "Only show icons on the minimap for quests you are tracking"

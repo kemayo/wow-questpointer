@@ -34,7 +34,7 @@ function ns:ADDON_LOADED(event, addon)
 	hooksecurefunc(C_QuestLog, "AddQuestWatch", update)
 	hooksecurefunc(C_QuestLog, "RemoveQuestWatch", update)
 
-	LibStub("tekKonfig-AboutPanel").new(myfullname, myname) -- Make first arg nil if no parent config panel
+	LibStub("konfig-AboutPanel").new(myfullname, myname) -- Make first arg nil if no parent config panel
 
 	ns.poi_parent = CreateFrame("Frame")
 	QuestPOI_Initialize(ns.poi_parent)

@@ -10,9 +10,9 @@
 <Script file="lib\HereBeDragons\HereBeDragons-Pins-2.0.lua"/>
 @end-non-debug@-->
 
-<Script file="lib\tekKonfigAboutPanel.lua"/>
-<Script file="lib\tekKonfigHeading.lua"/>
-<Script file="lib\tekKonfigSlider.lua"/>
-<Script file="lib\tekKonfigCheckbox.lua"/>
+<Script file="lib\konfigAboutPanel.lua"/>
+<Script file="lib\konfigHeading.lua"/>
+<Script file="lib\konfigSlider.lua"/>
+<Script file="lib\konfigCheckbox.lua"/>
 
 </Ui>
