@@ -94,7 +94,7 @@ end
 function ns:UpdatePOIs(...)
 	self.Debug("UpdatePOIs", ...)
 
-	local x, y, mapid, maptype = HBD:GetPlayerZonePosition()
+	local x, y, mapid = HBD:GetPlayerZonePosition()
 	if not (mapid and x and y) then
 		-- Means that this was probably a change triggered by the world map being
 		-- opened and browsed around. Since this is the case, we won't update any POIs for now.
@@ -107,12 +107,12 @@ function ns:UpdatePOIs(...)
 		return
 	end
 
-	for id, poi in pairs(pois) do
+	for _, poi in pairs(pois) do
 		self:ResetPOI(poi)
 	end
 
-	self:UpdateLogPOIs(mapid, floor)
-	self:UpdateWorldPOIs(mapid, floor)
+	self:UpdateLogPOIs(mapid)
+	self:UpdateWorldPOIs(mapid)
 
 	self:UpdateEdges()
 	self:UpdateGlow()
@@ -123,7 +123,7 @@ ns.ZONE_CHANGED_NEW_AREA = ns.UpdatePOIs
 ns.PLAYER_ENTERING_WORLD = ns.UpdatePOIs
 ns.QUEST_WATCH_LIST_CHANGED = ns.UpdatePOIs
 
-function ns:UpdateLogPOIs(mapid, floor)
+function ns:UpdateLogPOIs(mapid)
 	local cvar = GetCVarBool("questPOI")
 	SetCVar("questPOI", 1)
 	-- Interestingly, even if this isn't called, *some* POIs will show up. Not sure why.
@@ -144,7 +144,7 @@ function ns:UpdateLogPOIs(mapid, floor)
 		local isOnMap = C_QuestLog.IsOnMap(questId)
 		local isTask = C_QuestLog.IsQuestTask(questId)
 		-- IsQuestComplete seems to test for "is quest in a turnable-in state?", distinct from IsQuestFlaggedCompleted...
-		isComplete = C_QuestLog.IsComplete(questId)
+		local isComplete = C_QuestLog.IsComplete(questId)
 		if not isTask then
 			self.Debug("Skipped POI", i, posX, posY)
 			if isComplete then
@@ -185,7 +185,7 @@ function ns:UpdateLogPOIs(mapid, floor)
 	SetCVar("questPOI", cvar and 1 or 0)
 end
 
-function ns:UpdateWorldPOIs(mapid, floor)
+function ns:UpdateWorldPOIs(mapid)
 	if not ns.db.worldQuest then
 		return
 	end
@@ -193,7 +193,6 @@ function ns:UpdateWorldPOIs(mapid, floor)
 	if taskInfo == nil or #taskInfo == 0 then
 		return
 	end
-	local numTaskPOIs = #taskInfo
 	local taskIconIndex = 0
 	for i, info  in ipairs(taskInfo) do
 		if info.mapID == mapid and HaveQuestData(info.questId) and C_QuestLog.IsWorldQuest(info.questId) and (not ns.db.watchedOnly or self:WorldQuestIsWatched(info.questId)) then
