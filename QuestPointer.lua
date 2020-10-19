@@ -101,7 +101,7 @@ function ns:UpdatePOIs(...)
 		self.Debug("Skipped UpdatePOIs because of no player position")
 		return
 	end
-	if WorldMapFrame:IsVisible() then
+	if WorldMapFrame:IsVisible() and WorldMapFrame.mapID ~= mapid then
 		-- TODO: handle microdungeons
 		self.Debug("Skipped UpdatePOIs because map is open and not viewing current zone")
 		return
