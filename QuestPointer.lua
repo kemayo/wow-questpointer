@@ -196,7 +196,7 @@ function ns:UpdateWorldPOIs(mapid, floor)
 	local numTaskPOIs = #taskInfo
 	local taskIconIndex = 0
 	for i, info  in ipairs(taskInfo) do
-		if info.mapID == mapid and HaveQuestData(info.questId) and QuestUtils_IsQuestWorldQuest(info.questId) and (not ns.db.watchedOnly or self:WorldQuestIsWatched(info.questId)) then
+		if info.mapID == mapid and HaveQuestData(info.questId) and C_QuestLog.IsWorldQuest(info.questId) and (not ns.db.watchedOnly or self:WorldQuestIsWatched(info.questId)) then
 			local poiButton = self:GetWorldQuestButton(info)
 			Debug("WorldMapPOI", info.questId, poiButton)
 			if poiButton then
@@ -225,7 +225,7 @@ function ns:UpdateWorldPOIs(mapid, floor)
 end
 
 function ns:WorldQuestIsWatched(questId)
-	if IsWorldQuestWatched(questId) or IsWorldQuestHardWatched(questId) then
+	if C_QuestLog.GetQuestWatchType(questId) ~= nil then
 		return true
 	end
 	-- tasks we're currently in the area of count as "watched" for our purposes
