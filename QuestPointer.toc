@@ -7,6 +7,7 @@
 ## X-Category: Quest, Map
 ## X-Email: kemayo@gmail.com
 ## X-Website: http://davidlynch.org/wow/
+## X-Curse-Project-ID: 22106
 
 ## SavedVariables: QuestPointerDB
 ## SavedVariablesPerCharacter: QuestPointerDBPC
