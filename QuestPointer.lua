@@ -71,12 +71,12 @@ local POI_OnEnter, POI_OnLeave, POI_OnMouseUp, Arrow_OnUpdate
 
 ns.pois = pois
 
-function ns:ClosestPOI(all)
+function ns:ClosestPOI()
 	local closest, closest_distance, poi_distance, _
 	for id, poi in pairs(ns.pois) do
 		if poi.active then
 			_, poi_distance = HBDPins:GetVectorToIcon(poi)
-			
+
 			if closest then
 				if poi_distance and closest_distance and poi_distance < closest_distance then
 					closest = poi
@@ -133,7 +133,7 @@ function ns:UpdateLogPOIs(mapid)
 	local numCompletedQuests = 0
 	local numPois = QuestMapUpdateAllQuests()
 	local questPois = {}
-	Debug("Quests on map", numEntries)
+	Debug("Quests on map", numPois)
 	if ( numPois > 0 and GetCVarBool("questPOI") ) then
 		GetQuestPOIs(questPois)
 	end
