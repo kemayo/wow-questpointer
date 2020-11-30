@@ -167,18 +167,22 @@ function ns:UpdateLogPOIs(mapid)
 				poiButton = QuestPOI_GetButton(ns.poi_parent, questId, isOnMap and 'numeric' or 'remote', numNumericQuests)
 			end
 
-			local poi = self:GetPOI('QPL' .. i, poiButton)
+			-- poiButton won't be returned if C_QuestLog.IsQuestCalling(questId)
+			-- TODO: handle callings properly
+			if poiButton then
+				local poi = self:GetPOI('QPL' .. i, poiButton)
 
-			poi.index = i
-			poi.questId = questId
-			poi.title = title
-			poi.m = mapid
-			poi.x = posX
-			poi.y = posY
-			poi.active = true
-			poi.complete = isComplete
+				poi.index = i
+				poi.questId = questId
+				poi.title = title
+				poi.m = mapid
+				poi.x = posX
+				poi.y = posY
+				poi.active = true
+				poi.complete = isComplete
 
-			HBDPins:AddMinimapIconMap(self, poi, mapid, posX, posY, false, true)
+				HBDPins:AddMinimapIconMap(self, poi, mapid, posX, posY, false, true)
+			end
 		end
 	end
 
