@@ -8,6 +8,7 @@
 ## X-Email: kemayo@gmail.com
 ## X-Website: http://davidlynch.org/wow/
 ## X-Curse-Project-ID: 22106
+## X-Wago-ID: 0mNwYLKo
 
 ## SavedVariables: QuestPointerDB
 ## SavedVariablesPerCharacter: QuestPointerDBPC
