@@ -3,5 +3,5 @@ package-as: QuestPointer
 
 externals:
    lib/CallbackHandler-1.0: svn://svn.wowace.com/wow/callbackhandler/mainline/trunk/CallbackHandler-1.0
-   lib/LibDataBroker-1.1: git://github.com/tekkub/libdatabroker-1-1.git
-   lib/HereBeDragons: git://git.wowace.com/wow/herebedragons/mainline.git
+   lib/LibDataBroker-1.1: https://github.com/tekkub/libdatabroker-1-1.git
+   lib/HereBeDragons: https://github.com/Nevcairiel/HereBeDragons.git
