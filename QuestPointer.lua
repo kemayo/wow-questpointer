@@ -246,6 +246,8 @@ do
 		GetBountyQuestID = function() return nil end,
 		IsMarkingActiveQuests = function() return true end,
 		ShouldHighlightInfo = function() return false end,
+		ShouldSupertrackHighlightInfo = function() return false end,
+		GetBountyInfo = function() return end,
 	}
 	function ns:GetWorldQuestButton(info)
 		local poiButton = ns.wqpool:Acquire()
