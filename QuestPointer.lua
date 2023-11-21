@@ -36,9 +36,10 @@ function ns:ADDON_LOADED(event, addon)
 
 	LibStub("konfig-AboutPanel").new(myfullname, myname) -- Make first arg nil if no parent config panel
 
-	ns.poi_parent = CreateFrame("Frame")
-	QuestPOI_Initialize(ns.poi_parent)
-	ns.wqpool = CreateFramePool("BUTTON", ns.poi_parent, "WorldMap_WorldQuestPinTemplate")
+	ns.poi_parent = CreateFrame("Frame", "QuestPointerPOIParent", nil, "POIButtonOwnerTemplate")
+	local onCreateFunc = nil
+	local useHighlightManager = true
+	ns.poi_parent:Init(onCreateFunc, useHighlightManager)
 
 	self:UnregisterEvent("ADDON_LOADED")
 	self.ADDON_LOADED = nil
@@ -110,6 +111,7 @@ function ns:UpdatePOIs(...)
 	for _, poi in pairs(pois) do
 		self:ResetPOI(poi)
 	end
+	ns.poi_parent:ResetUsage()
 
 	self:UpdateLogPOIs(mapid)
 	self:UpdateWorldPOIs(mapid)
@@ -161,10 +163,10 @@ function ns:UpdateLogPOIs(mapid)
 			local poiButton
 			if isComplete then
 				self.Debug("Making with complete", i)
-				poiButton = QuestPOI_GetButton(ns.poi_parent, questId, isOnMap and 'normal' or 'remote', numCompletedQuests)
+				poiButton = ns.poi_parent:GetButtonForQuest(questId, POIButtonUtil.Style.QuestComplete, nil)
 			else
 				self.Debug("Making with numeric", i - numCompletedQuests)
-				poiButton = QuestPOI_GetButton(ns.poi_parent, questId, isOnMap and 'numeric' or 'remote', numNumericQuests)
+				poiButton = ns.poi_parent:GetButtonForQuest(questId, POIButtonUtil.Style.QuestNumeric, i - numCompletedQuests)
 			end
 
 			-- poiButton won't be returned if C_QuestLog.IsQuestCalling(questId)
@@ -200,18 +202,18 @@ function ns:UpdateWorldPOIs(mapid)
 	local taskIconIndex = 0
 	for i, info  in ipairs(taskInfo) do
 		if info.mapID == mapid and HaveQuestData(info.questId) and C_QuestLog.IsWorldQuest(info.questId) and (not ns.db.watchedOnly or self:WorldQuestIsWatched(info.questId)) then
-			local poiButton = self:GetWorldQuestButton(info)
+			local poiButton = ns.poi_parent:GetButtonForQuest(info.questId)
 			Debug("WorldMapPOI", info.questId, poiButton)
+
 			if poiButton then
 				local poi = self:GetPOI('QPWQ' .. taskIconIndex, poiButton)
-				poiButton.questID = info.questId
-				poiButton.numObjectives = info.numObjectives
 
 				taskIconIndex = taskIconIndex + 1
 
 				poi.index = i
 				poi.questId = info.questId
 				poi.title = C_TaskQuest.GetQuestInfoByQuestID(info.questId)
+				poi.numObjectives = info.numObjectives
 				poi.m = mapid
 				poi.x = info.x
 				poi.y = info.y
@@ -239,92 +241,6 @@ function ns:WorldQuestIsWatched(questId)
 		end
 	end
 	return false
-end
-
-do
-	local fauxDataProvider = {
-		GetBountyQuestID = function() return nil end,
-		IsMarkingActiveQuests = function() return true end,
-		ShouldHighlightInfo = function() return false end,
-		ShouldSupertrackHighlightInfo = function() return false end,
-		GetBountyInfo = function() return end,
-	}
-	function ns:GetWorldQuestButton(info)
-		local poiButton = ns.wqpool:Acquire()
-
-		poiButton.questID = info.questId
-		poiButton.dataProvider = fauxDataProvider
-		poiButton.scaleFactor = 0.4
-
-		local tagInfo = C_QuestLog.GetQuestTagInfo(info.questId)
-		-- local tagID, tagName, worldQuestType, rarity, isElite, tradeskillLineIndex, displayTimeLeft = GetQuestTagInfo(info.questId)
-		local tradeskillLineID = tagInfo.tradeskillLineID and select(7, GetProfessionInfo(tagInfo.tradeskillLineID))
-
-		poiButton.worldQuestType = tagInfo.worldQuestType
-
-		if tagInfo.quality ~= Enum.WorldQuestQuality.Common then
-			poiButton.Background:SetTexCoord(0, 1, 0, 1);
-			poiButton.PushedBackground:SetTexCoord(0, 1, 0, 1);
-			poiButton.Highlight:SetTexCoord(0, 1, 0, 1);
-
-			poiButton.Background:SetSize(45, 45);
-			poiButton.PushedBackground:SetSize(45, 45);
-			poiButton.Highlight:SetSize(45, 45);
-			poiButton.SelectedGlow:SetSize(45, 45);
-
-			if tagInfo.quality == Enum.WorldQuestQuality.Rare then
-				poiButton.Background:SetAtlas("worldquest-questmarker-rare");
-				poiButton.PushedBackground:SetAtlas("worldquest-questmarker-rare-down");
-				poiButton.Highlight:SetAtlas("worldquest-questmarker-rare");
-				poiButton.SelectedGlow:SetAtlas("worldquest-questmarker-rare");
-			elseif tagInfo.quality == Enum.WorldQuestQuality.Epic then
-				poiButton.Background:SetAtlas("worldquest-questmarker-epic");
-				poiButton.PushedBackground:SetAtlas("worldquest-questmarker-epic-down");
-				poiButton.Highlight:SetAtlas("worldquest-questmarker-epic");
-				poiButton.SelectedGlow:SetAtlas("worldquest-questmarker-epic");
-			end
-		else
-			poiButton.Background:SetSize(75, 75);
-			poiButton.PushedBackground:SetSize(75, 75);
-			poiButton.Highlight:SetSize(75, 75);
-
-			-- We are setting the texture without updating the tex coords.  Refresh visuals will handle
-			-- updating the tex coords based on whether this pin is selected or not.
-			poiButton.Background:SetTexture("Interface/WorldMap/UI-QuestPoi-NumberIcons");
-			poiButton.PushedBackground:SetTexture("Interface/WorldMap/UI-QuestPoi-NumberIcons");
-			poiButton.Highlight:SetTexture("Interface/WorldMap/UI-QuestPoi-NumberIcons");
-
-			poiButton.Highlight:SetTexCoord(0.625, 0.750, 0.875, 1);
-		end
-
-		poiButton:RefreshVisuals()
-		-- ns:RefreshWorldQuestButton(poiButton)
-
-		if tagInfo.isElite then
-			poiButton.Underlay:SetAtlas("worldquest-questmarker-dragon");
-			poiButton.Underlay:Show();
-		else
-			poiButton.Underlay:Hide();
-		end
-
-		local timeLeftMinutes = C_TaskQuest.GetQuestTimeLeftMinutes(info.questId)
-		if timeLeftMinutes and timeLeftMinutes <= WORLD_QUESTS_TIME_LOW_MINUTES then
-			poiButton.TimeLowFrame:Show()
-		else
-			poiButton.TimeLowFrame:Hide()
-		end
-
-		poiButton:SetScale(0.3)
-
-		-- poiButton:SetSize(20, 20)
-		-- poiButton.Glow:SetSize(29, 29)
-		-- poiButton.BountyRing:SetSize(29, 29)
-		-- poiButton.Underlay:SetSize(32, 32)
-		-- poiButton.TrackedCheck:SetSize(17, 15)
-		-- poiButton.TimeLowFrame:SetSize(18, 18)
-
-		return poiButton
-	end
 end
 
 function ns:GetPOI(id, button)
@@ -369,62 +285,16 @@ function ns:GetPOI(id, button)
 end
 function ns:ResetPOI(poi)
 	HBDPins:RemoveMinimapIcon(self, poi)
-	if poi.poiButton then
-		ns.wqpool:Release(poi.poiButton)
-
-		poi.poiButton:Hide()
-		poi.poiButton:SetParent(Minimap)
-		poi.poiButton = nil
-	end
 	poi.arrow:Hide()
 	poi.active = false
+	poi.poiButton = nil
 end
 
-do
-	local selected
-	function ns:UpdateGlow()
-		selected = self:ClearSelection(selected)
-		selected = self:SetSelection(self:ClosestPOI())
-		if closest then
-			selected = closest
-
-			if not closest.worldquest then
-				QuestPOI_SelectButton(closest.poiButton)
-			end
-		end
-	end
-	function ns:SetSelection(poi)
-		if not poi then return end
-		if poi.worldquest then
-			local tagInfo = C_QuestLog.GetQuestTagInfo(poi.poiButton.questID)
-			-- override this bit from WorldQuestDataProvider.lua
-			if tagInfo.quality == Enum.WorldQuestQuality.Common then
-				poi.poiButton.Background:SetTexCoord(0.500, 0.625, 0.375, 0.5)
-				poi.poiButton.PushedBackground:SetTexCoord(0.375, 0.500, 0.375, 0.5)
-			else
-				poi.poiButton.SelectedGlow:SetShown(true)
-			end
-			poi.poiButton.Glow:SetShown(true)
-		else
-			QuestPOI_SelectButton(poi.poiButton)
-		end
-		return poi
-	end
-	function ns:ClearSelection(poi)
-		if (not poi) or (not poi.active) then return end
-		if poi.worldquest then
-			local tagInfo = C_QuestLog.GetQuestTagInfo(poi.poiButton.questID)
-			-- override this bit from WorldQuestDataProvider.lua
-			if tagInfo.quality == Enum.WorldQuestQuality.Common then
-				poi.poiButton.Background:SetTexCoord(0.875, 1, 0.375, 0.5)
-				poi.poiButton.PushedBackground:SetTexCoord(0.750, 0.875, 0.375, 0.5)
-			else
-				poi.poiButton.SelectedGlow:SetShown(true)
-			end
-			poi.poiButton.Glow:SetShown(false)
-		else
-			QuestPOI_ClearSelection(ns.poi_parent)
-		end
+function ns:UpdateGlow()
+	ns.poi_parent:ClearSelection()
+	selected = self:ClosestPOI()
+	if selected then
+		ns.poi_parent:SelectButton(selected.poiButton)
 	end
 end
 

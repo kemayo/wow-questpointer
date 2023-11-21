@@ -89,7 +89,7 @@ frame:SetScript("OnShow", function(frame)
 	end)
 	
 	local fadeEdge = tekcheck.new(frame, nil, "Fade non-arrow icons on the edge", "TOPLEFT", aalphacontainer, "BOTTOMLEFT", -2, -GAP)
-	fadeEdge.tiptext = "Fade out the quest POIs if the hit the edge of the minimap, to distinguish them from ones which are close by."
+	fadeEdge.tiptext = "Fade out the quest POIs if they hit the edge of the minimap, to distinguish them from ones which are close by."
 	fadeEdge:SetScript("OnClick", function(self)
 		checksound(self)
 		ns.db.fadeEdge = not ns.db.fadeEdge
