@@ -2,7 +2,7 @@
 local myname, ns = ...
 
 
-local myfullname = GetAddOnMetadata(myname, "Title")
+local myfullname = C_AddOns.GetAddOnMetadata(myname, "Title")
 function ns.Print(...) print("|cFF33FF99".. myfullname.. "|r:", ...) end
 
 local debugf = tekDebug and tekDebug:GetFrame(myname)

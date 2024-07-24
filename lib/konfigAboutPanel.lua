@@ -1,5 +1,5 @@
 -- this is a fork of tekKonfig by tekkub
-local lib, oldminor = LibStub:NewLibrary("konfig-AboutPanel", 1)
+local lib, oldminor = LibStub:NewLibrary("konfig-AboutPanel", 2)
 if not lib then return end
 
 
@@ -8,7 +8,16 @@ function lib.new(parent, addonname)
 	frame.name, frame.parent, frame.addonname = parent and "About" or addonname, parent, addonname
 	frame:Hide()
 	frame:SetScript("OnShow", lib.OnShow)
-	InterfaceOptions_AddCategory(frame)
+	frame.OnCommit = frame.okay
+	frame.OnDefault = frame.default
+	frame.OnRefresh = frame.refresh
+	if frame.parent then
+		local category = Settings.GetCategory(frame.parent)
+		local subcategory, layout = Settings.RegisterCanvasLayoutSubcategory(category, frame, frame.name, frame.name)
+	else
+		local category, layout = Settings.RegisterCanvasLayoutCategory(frame, frame.name, frame.name)
+		Settings.RegisterCategory(category)
+	end
 	return frame
 end
 
@@ -66,7 +75,7 @@ local function ShowTooltip(self)
 	GameTooltip:SetText("Click and press Ctrl-C to copy")
 end
 function lib.OnShow(frame)
-	local notes = GetAddOnMetadata(frame.addonname, "Notes")
+	local notes = C_AddOns.GetAddOnMetadata(frame.addonname, "Notes")
 
 	local title = frame:CreateFontString(nil, "ARTWORK", "GameFontNormalLarge")
 	title:SetPoint("TOPLEFT", 16, -16)
@@ -83,7 +92,7 @@ function lib.OnShow(frame)
 
 	local anchor
 	for _,field in pairs(fields) do
-		local val = GetAddOnMetadata(frame.addonname, field)
+		local val = C_AddOns.GetAddOnMetadata(frame.addonname, field)
 		if val then
 			local title = frame:CreateFontString(nil, "ARTWORK", "GameFontNormalSmall")
 			title:SetWidth(75)

@@ -1,5 +1,5 @@
 local myname, ns = ...
-local myfullname = GetAddOnMetadata(myname, "Title")
+local myfullname = C_AddOns.GetAddOnMetadata(myname, "Title")
 
 ----------------------
 --      Locals      --
@@ -109,13 +109,24 @@ frame:SetScript("OnShow", function(frame)
 	frame:SetScript("OnShow", nil)
 end)
 
-InterfaceOptions_AddCategory(frame)
+frame.OnCommit = frame.okay
+frame.OnDefault = frame.default
+frame.OnRefresh = frame.refresh
+if frame.parent then
+	local category = Settings.GetCategory(frame.parent)
+	local subcategory, layout = Settings.RegisterCanvasLayoutSubcategory(category, frame, frame.name, frame.name)
+else
+	local category, layout = Settings.RegisterCanvasLayoutCategory(frame, frame.name, frame.name)
+	Settings.RegisterCategory(category)
+end
+
+LibStub("konfig-AboutPanel").new(myfullname, myname) -- Make first arg nil if no parent config panel
 
 -----------------------------
 --      Slash command      --
 -----------------------------
 
-_G["SLASH_".. myname:upper().."1"] = GetAddOnMetadata(myname, "X-LoadOn-Slash")
+_G["SLASH_".. myname:upper().."1"] = C_AddOns.GetAddOnMetadata(myname, "X-LoadOn-Slash")
 _G["SLASH_".. myname:upper().."2"] = "/qp"
 SlashCmdList[myname:upper()] = function(msg)
 	if msg:match("closest") then
@@ -125,7 +136,7 @@ SlashCmdList[myname:upper()] = function(msg)
 			ns.Print("TomTom not found")
 		end
 	else
-		InterfaceOptionsFrame_OpenToCategory(myname)
+		Settings.OpenToCategory(myname)
 	end
 end
 
@@ -139,7 +150,7 @@ LibStub:GetLibrary("LibDataBroker-1.1"):NewDataObject(myname, {
 	iconCoords = {0, 0.5, 0, 0.5},
 	OnClick = function(self, button)
 		if button == "RightButton" then
-			InterfaceOptionsFrame_OpenToCategory(myname)
+			Settings.OpenToCategory(myname)
 		elseif ns.TomTomClosestPOI then
 			ns:TomTomClosestPOI()
 		end
