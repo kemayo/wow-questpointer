@@ -120,8 +120,6 @@ else
 	Settings.RegisterCategory(category)
 end
 
-LibStub("konfig-AboutPanel").new(myfullname, myname) -- Make first arg nil if no parent config panel
-
 -----------------------------
 --      Slash command      --
 -----------------------------
