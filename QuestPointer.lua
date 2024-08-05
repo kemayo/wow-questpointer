@@ -124,23 +124,29 @@ ns.PLAYER_ENTERING_WORLD = ns.UpdatePOIs
 ns.QUEST_WATCH_LIST_CHANGED = ns.UpdatePOIs
 
 if _G.GetQuestsForPlayerByMapIDCached then
+	-- 11.0.0+
 	function ns:UpdateLogPOIs(mapID)
 		local cvar = GetCVarBool("questPOI")
 		SetCVar("questPOI", 1)
 		-- Interestingly, even if this isn't called, *some* POIs will show up. Not sure why.
 		QuestPOIUpdateIcons()
 
-		local taskInfo = GetQuestsForPlayerByMapIDCached(mapID)
-		if taskInfo and #taskInfo > 0 then
-			for i, info in ipairs(taskInfo) do
-				local questId = info.questId
-				local isTask = C_QuestLog.IsQuestTask(questId)
-				if MapUtil.ShouldShowTask(mapID, info) and (not self.db.watchedOnly or C_QuestLog.GetQuestWatchType(questId)) and not isTask then
-					self.Debug("POI", questId, info.x, info.y, isTask)
+		-- Fetches all the quests the player is on, *including* bonus-objective ones (IsQuestTask)
+		-- local taskInfo = GetQuestsForPlayerByMapIDCached(mapID)
+		local quests = C_QuestLog.GetQuestsOnMap(mapID)
+		if quests and #quests > 0 then
+			for i, info in ipairs(quests) do
+				local questId = info.questID
+				if
+					HaveQuestData(questId)
+					and not C_QuestLog.IsQuestTask(questId)
+					and (not self.db.watchedOnly or C_QuestLog.GetQuestWatchType(questId))
+				then
+					self.Debug("POI", questId, info.x, info.y)
 
 					-- poiButton won't be returned if C_QuestLog.IsQuestCalling(questId)
 					-- TODO: handle callings properly
-					local poiButton = ns.poi_parent:GetButtonForQuest(questId, POIButtonUtil.GetStyle(info.questId))
+					local poiButton = ns.poi_parent:GetButtonForQuest(questId, POIButtonUtil.GetStyle(questId))
 					if poiButton then
 						local poi = self:GetPOI('QPL' .. i, poiButton)
 
@@ -152,6 +158,7 @@ if _G.GetQuestsForPlayerByMapIDCached then
 						poi.y = info.y
 						poi.active = true
 						poi.complete = C_QuestLog.IsComplete(questId)
+						-- print("Obtained quest POI", poi.questId, poi.title)
 
 						HBDPins:AddMinimapIconMap(self, poi, mapID, info.x, info.y, false, true)
 					end
