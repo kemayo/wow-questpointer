@@ -246,8 +246,15 @@ function ns:UpdateWorldPOIs(mapid)
 	end
 	local taskIconIndex = 0
 	for i, info  in ipairs(taskInfo) do
-		if info.mapID == mapid and HaveQuestData(info.questId) and C_QuestLog.IsWorldQuest(info.questId) and (not ns.db.watchedOnly or self:WorldQuestIsWatched(info.questId)) then
-			local poiButton = ns.poi_parent:GetButtonForQuest(info.questId, POIButtonUtil.GetStyle(info.questId))
+		if
+			info.mapID == mapid
+			and HaveQuestData(info.questId)
+			and C_QuestLog.IsWorldQuest(info.questId)
+			and (not ns.db.watchedOnly or self:WorldQuestIsWatched(info.questId))
+		then
+			-- POIButtonUtil.GetStyle doesn't cope with world quests, sadly
+			-- (Blizzard_ObjectiveTrackerQuestPOIBlock also overrides it this way...)
+			local poiButton = ns.poi_parent:GetButtonForQuest(info.questId, POIButtonUtil.Style.WorldQuest)
 			Debug("WorldMapPOI", info.questId, poiButton)
 
 			if poiButton then
