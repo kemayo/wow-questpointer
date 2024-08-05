@@ -426,9 +426,13 @@ function ns:UpdateEdges()
 						poi.arrow:SetAlpha(ns.db.arrowAlpha)
 					end
 				else
-					poi.poiButton:Show()
-					poi.arrow:Hide()
-					poi.poiButton:SetAlpha(ns.db.iconAlpha * (ns.db.fadeEdge and 0.6 or 1))
+					if superTrackedQuestId == poi.questId then
+						poi.poiButton:Hide()
+					else
+						poi.poiButton:Show()
+						poi.arrow:Hide()
+						poi.poiButton:SetAlpha(ns.db.iconAlpha * (ns.db.fadeEdge and 0.6 or 1))
+					end
 				end
 			else
 				--hide completed POIs when close enough to see the ?
