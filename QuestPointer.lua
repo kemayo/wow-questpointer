@@ -129,9 +129,10 @@ function ns:UpdateLogPOIs(mapID)
 	local quests = C_QuestLog.GetQuestsOnMap(mapID)
 	if quests and #quests > 0 then
 		for i, info in ipairs(quests) do
-			local questId = info.questID
+			local questId = info and info.questID
 			if
-				HaveQuestData(questId)
+				questId
+				and HaveQuestData(questId)
 				and not C_QuestLog.IsQuestTask(questId)
 				and (not self.db.watchedOnly or C_QuestLog.GetQuestWatchType(questId))
 			then
@@ -158,9 +159,10 @@ function ns:UpdateWorldPOIs(mapID)
 		return
 	end
 	local taskIconIndex = 0
-	for i, info  in ipairs(taskInfo) do
+	for i, info in ipairs(taskInfo) do
 		if
-			info.mapID == mapID
+			info and info.questID
+			and info.mapID == mapID
 			and HaveQuestData(info.questId)
 			and C_QuestLog.IsWorldQuest(info.questId)
 			and (not ns.db.watchedOnly or self:WorldQuestIsWatched(info.questId))
