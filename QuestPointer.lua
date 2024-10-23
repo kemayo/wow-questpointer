@@ -154,22 +154,23 @@ function ns:UpdateWorldPOIs(mapID)
 	if not ns.db.worldQuest then
 		return
 	end
-	local taskInfo = C_TaskQuest.GetQuestsForPlayerByMapID(mapID)
+	local taskInfo = C_TaskQuest.GetQuestsOnMap and C_TaskQuest.GetQuestsOnMap(mapID) or C_TaskQuest.GetQuestsForPlayerByMapID(mapID)
 	if taskInfo == nil or #taskInfo == 0 then
 		return
 	end
 	local taskIconIndex = 0
 	for i, info in ipairs(taskInfo) do
+		local questId = info and (info.questID or info.questId)
 		if
-			info and info.questID
-			and HaveQuestData(info.questId)
-			and C_QuestLog.IsWorldQuest(info.questId)
-			and (not ns.db.watchedOnly or self:WorldQuestIsWatched(info.questId))
+			questId
+			and HaveQuestData(questId)
+			and C_QuestLog.IsWorldQuest(questId)
+			and (not ns.db.watchedOnly or self:WorldQuestIsWatched(questId))
 		then
 			-- info.mapID might not be the current mapID, if the quest is
 			-- technically in another map, *but* info.x and info.y are placed
 			-- on the current mapID
-			local poi = self:GetPOI('QPWQ' .. taskIconIndex, info.questId, mapID, info.x, info.y)
+			local poi = self:GetPOI('QPWQ' .. taskIconIndex, questId, mapID, info.x, info.y)
 
 			taskIconIndex = taskIconIndex + 1
 
