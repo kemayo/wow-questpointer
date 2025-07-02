@@ -1,4 +1,4 @@
-## Interface: 110100
+## Interface: 110107
 
 ## Title: QuestPointer
 ## Author: Kemayo
@@ -26,7 +26,7 @@
 ## SavedVariables: QuestPointerDB
 ## SavedVariablesPerCharacter: QuestPointerDBPC
 
-## OptionalDeps: tekDebug, tekErr, TomTom, HereBeDragons-1.0
+## OptionalDeps: tekDebug, tekErr, TomTom, HereBeDragons-2.0
 
 ## LoadOnDemand: 0
 ## LoadManagers: AddonLoader
