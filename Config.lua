@@ -49,7 +49,16 @@ frame:SetScript("OnShow", function(frame)
 	end)
 	useArrows:SetChecked(ns.db.useArrows)
 
-	local scaleslider, scaleslidertext, scalecontainer = tekslider.new(frame, string.format("Icon scale: %.2f", ns.db.iconScale or 1), 0.3, 2, "TOPLEFT", useArrows, "BOTTOMLEFT", 2, -GAP)
+	local completedClose = tekcheck.new(frame, nil, "Show completed quests up-close", "TOPLEFT", useArrows, "BOTTOMLEFT", -2, -GAP)
+	completedClose.tiptext = "Whether to show the icon for completed quests when not on the edge of the minimap. This will cover up the built-in quest completion indicator when it's shown."
+	completedClose:SetScript("OnClick", function(self)
+		checksound(self)
+		ns.db.completedClose = not ns.db.completedClose
+		ns:UpdatePOIs()
+	end)
+	completedClose:SetChecked(ns.db.completedClose)
+
+	local scaleslider, scaleslidertext, scalecontainer = tekslider.new(frame, string.format("Icon scale: %.2f", ns.db.iconScale or 1), 0.3, 2, "TOPLEFT", completedClose, "BOTTOMLEFT", 2, -GAP)
 	scaleslider.tiptext = "Set the POI icon scale."
 	scaleslider:SetValue(ns.db.iconScale or 1)
 	scaleslider:SetValueStep(.05)

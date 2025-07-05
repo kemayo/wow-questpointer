@@ -15,6 +15,7 @@ ns.defaults = {
 	fadeEdge = true,
 	autoTomTom = false,
 	worldQuest = true,
+	completedClose = WOW_PROJECT_ID ~= WOW_PROJECT_MAINLINE, -- Classic
 }
 ns.defaultsPC = {}
 
@@ -376,7 +377,7 @@ function ns:UpdateEdges()
 				end
 			else
 				--hide completed POIs when close enough to see the ?
-				if poi.complete then
+				if poi.complete and not ns.db.completedClose then
 					poi.poiButton:Hide()
 				else
 					poi.poiButton:Show()
