@@ -112,12 +112,14 @@ end)
 frame.OnCommit = frame.okay
 frame.OnDefault = frame.default
 frame.OnRefresh = frame.refresh
+
 if frame.parent then
 	local category = Settings.GetCategory(frame.parent)
-	local subcategory, layout = Settings.RegisterCanvasLayoutSubcategory(category, frame, frame.name, frame.name)
+	local subcategory, layout = Settings.RegisterCanvasLayoutSubcategory(category, frame, frame.name)
 else
-	local category, layout = Settings.RegisterCanvasLayoutCategory(frame, frame.name, frame.name)
-	Settings.RegisterCategory(category)
+	local category, layout = Settings.RegisterCanvasLayoutCategory(frame, frame.name)
+	Settings.RegisterAddOnCategory(category)
+	category.ID = myname
 end
 
 -----------------------------
