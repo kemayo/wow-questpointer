@@ -29,6 +29,7 @@ local POIButtonMixin = {
 local poi_parent = CreateFrame("Frame")
 QuestPOI_Initialize(poi_parent, function(button)
 	Mixin(button, POIButtonMixin)
+	button:SetParent(Minimap)
 end)
 poi_parent.numCompleted = 0
 
