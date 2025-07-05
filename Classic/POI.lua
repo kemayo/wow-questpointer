@@ -26,26 +26,27 @@ local POIButtonMixin = {
 	end
 }
 
-function ns:GetPOIButton(questId, mapID, x, y, index)
-	if not self.poi_parent then
-		self.poi_parent = CreateFrame("Frame")
-		QuestPOI_Initialize(self.poi_parent)
-		self.poi_parent.numCompleted = 0
-	end
-	local completed = IsQuestComplete(questId)
-	self.poi_parent.numCompleted = self.poi_parent.numCompleted + (completed and 1 or 0)
-	local button = QuestPOI_GetButton(self.poi_parent, questId, completed and "completed" or "numeric", index - self.poi_parent.numCompleted)
+local poi_parent = CreateFrame("Frame")
+QuestPOI_Initialize(poi_parent, function(button)
 	Mixin(button, POIButtonMixin)
+end)
+poi_parent.numCompleted = 0
+
+function ns:GetPOIButton(questId, mapID, x, y, index)
+	local completed = IsQuestComplete(questId)
+	poi_parent.numCompleted = poi_parent.numCompleted + (completed and 1 or 0)
+	local button = QuestPOI_GetButton(poi_parent, questId, completed and "completed" or "numeric", index - poi_parent.numCompleted)
 	return button
 end
 
 function ns:ResetPOIs(pois)
 	for _, poi in pairs(pois) do
 		self:ResetPOI(poi)
+		poi.poiButton = nil
 	end
-	if self.poi_parent then
-		self.poi_parent.numCompleted = 0
-		QuestPOI_HideAllButtons(self.poi_parent)
+	if poi_parent then
+		poi_parent.numCompleted = 0
+		QuestPOI_HideAllButtons(poi_parent)
 	end
 end
 

@@ -234,12 +234,14 @@ function ns:GetPOI(id, questId, mapID, x, y, index)
 
 		poi.arrow = arrow
 
+		pois[id] = poi
+	end
+	if not poi.poiButton then
+		-- Classic resets the poiButton because it maintains a pool whose setup differs based on type
 		local button = self:GetPOIButton(questId, mapID, x, y, index)
 		button:SetPoint("CENTER", poi)
 		button:EnableMouse(false)
 		poi.poiButton = button
-
-		pois[id] = poi
 	end
 
 	poi.poiButton:SetScale(self.db.iconScale * (poi.poiButton.scaleFactor or 1))
@@ -263,16 +265,20 @@ end
 function ns:ResetPOI(poi)
 	HBDPins:RemoveMinimapIcon(self, poi)
 	poi.arrow:Hide()
-	poi.poiButton:ChangeSelected(false)
 	poi.active = false
+	if poi.poiButton then
+		poi.poiButton:ChangeSelected(false)
+	end
 end
 
 function ns:UpdateGlow()
 	for _, poi in pairs(ns.pois) do
-		poi.poiButton:ChangeSelected(false)
+		if poi.poiButton then
+			poi.poiButton:ChangeSelected(false)
+		end
 	end
 	local selected = self:ClosestPOI()
-	if selected then
+	if selected and selected.poiButton then
 		selected.poiButton:ChangeSelected(true)
 	end
 end
