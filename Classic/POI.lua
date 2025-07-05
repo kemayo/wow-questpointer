@@ -55,11 +55,9 @@ function ns:IsQuestWatched(questId)
 		if questIndex then
 			local watchId = GetQuestIDFromLogIndex(questIndex)
 			if watchId == questId then
-				print("IsQuestComplete", questId, true)
 				return true
 			end
 		end
 	end
-	print("IsQuestComplete", questId, false)
 	return false
 end
