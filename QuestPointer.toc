@@ -1,4 +1,4 @@
-## Interface: 110107
+## Interface: 110107, 50500
 
 ## Title: QuestPointer
 ## Author: Kemayo
@@ -41,5 +41,6 @@ template\UtilityFunctions.lua
 template\EventDispatcher.lua
 
 QuestPointer.lua
+[Family]\POI.lua
 TomTom.lua
 Config.lua

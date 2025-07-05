@@ -28,6 +28,7 @@ frame:SetScript("OnShow", function(frame)
 		ns:UpdatePOIs()
 	end)
 	worldQuest:SetChecked(ns.db.worldQuest)
+	worldQuest:SetEnabled(C_QuestLog.IsWorldQuest and true or false)
 
 	local tracked = tekcheck.new(frame, nil, "Tracked quests only", "TOPLEFT", worldQuest, "BOTTOMLEFT", -2, -GAP)
 	tracked.tiptext = "Only show icons on the minimap for quests you are tracking"

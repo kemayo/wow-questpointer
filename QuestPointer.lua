@@ -27,12 +27,23 @@ function ns:ADDON_LOADED(event, addon)
 	self:RegisterEvent("QUEST_LOG_UPDATE")
 	self:RegisterEvent("ZONE_CHANGED_NEW_AREA")
 	self:RegisterEvent("PLAYER_ENTERING_WORLD")
-	self:RegisterEvent("SUPER_TRACKING_CHANGED")
+	if C_EventUtils.IsEventValid("SUPER_TRACKING_CHANGED") then
+		self:RegisterEvent("SUPER_TRACKING_CHANGED")
+	end
+	if C_EventUtils.IsEventValid("ENCOUNTER_LOOT_RECEIVED") then
+		self:RegisterEvent("ENCOUNTER_LOOT_RECEIVED")
+	end
 	self:RegisterEvent("QUEST_WATCH_LIST_CHANGED")
 
 	local update = function() self:UpdatePOIs() end
-	hooksecurefunc(C_QuestLog, "AddQuestWatch", update)
-	hooksecurefunc(C_QuestLog, "RemoveQuestWatch", update)
+	if C_QuestLog.AddQuestWatch then
+		hooksecurefunc(C_QuestLog, "AddQuestWatch", update)
+		hooksecurefunc(C_QuestLog, "RemoveQuestWatch", update)
+	else
+		-- these are passed the index rather than the ID, but we don't really care
+		hooksecurefunc("AddQuestWatch", update)
+		hooksecurefunc("RemoveQuestWatch", update)
+	end
 
 	self:UnregisterEvent("ADDON_LOADED")
 	self.ADDON_LOADED = nil
@@ -101,9 +112,7 @@ function ns:UpdatePOIs(...)
 		return
 	end
 
-	for _, poi in pairs(pois) do
-		self:ResetPOI(poi)
-	end
+	self:ResetPOIs(pois)
 
 	self:UpdateLogPOIs(mapid)
 	self:UpdateWorldPOIs(mapid)
@@ -133,13 +142,13 @@ function ns:UpdateLogPOIs(mapID)
 			if
 				questId
 				and HaveQuestData(questId)
-				and not C_QuestLog.IsQuestTask(questId)
-				and (not self.db.watchedOnly or C_QuestLog.GetQuestWatchType(questId))
+				and not (C_QuestLog.IsQuestTask and C_QuestLog.IsQuestTask(questId))
+				and (not self.db.watchedOnly or self:IsQuestWatched(questId))
 			then
 				self.Debug("POI", questId, info.x, info.y)
 
 				-- TODO: handle callings properly
-				local poi = self:GetPOI('QPL' .. i, questId, mapID, info.x, info.y)
+				local poi = self:GetPOI('QPL' .. i, questId, mapID, info.x, info.y, i)
 				-- print("Obtained quest POI", poi.questId, poi.title)
 
 				HBDPins:AddMinimapIconMap(self, poi, mapID, info.x, info.y, false, true)
@@ -151,10 +160,15 @@ function ns:UpdateLogPOIs(mapID)
 end
 
 function ns:UpdateWorldPOIs(mapID)
-	if not ns.db.worldQuest then
+	if not (ns.db.worldQuest and C_QuestLog.IsWorldQuest) then
 		return
 	end
-	local taskInfo = C_TaskQuest.GetQuestsOnMap and C_TaskQuest.GetQuestsOnMap(mapID) or C_TaskQuest.GetQuestsForPlayerByMapID(mapID)
+	local taskInfo
+	if C_TaskQuest.GetQuestsOnMap then
+		taskInfo = C_TaskQuest.GetQuestsOnMap(mapID)
+	else
+		taskInfo = C_TaskQuest.GetQuestsForPlayerByMapID(mapID)
+	end
 	if taskInfo == nil or #taskInfo == 0 then
 		return
 	end
@@ -170,7 +184,7 @@ function ns:UpdateWorldPOIs(mapID)
 			-- info.mapID might not be the current mapID, if the quest is
 			-- technically in another map, *but* info.x and info.y are placed
 			-- on the current mapID
-			local poi = self:GetPOI('QPWQ' .. taskIconIndex, questId, mapID, info.x, info.y)
+			local poi = self:GetPOI('QPWQ' .. taskIconIndex, questId, mapID, info.x, info.y, i)
 
 			taskIconIndex = taskIconIndex + 1
 
@@ -193,26 +207,7 @@ function ns:WorldQuestIsWatched(questId)
 	return false
 end
 
-local function POIButtonUtil_GetStyle(questId)
-	-- POIButtonUtil.GetStyle taints the objective tracker, so this is replicating it
-	if C_QuestLog.IsComplete(questId) then
-		return POIButtonUtil.Style.QuestComplete
-	elseif C_QuestLog.IsQuestDisabledForSession(questId) then
-		return POIButtonUtil.Style.QuestDisabled
-	else
-		return POIButtonUtil.Style.QuestInProgress
-	end
-end
-local POIButtonMixinPlus = {
-	GetQuestClassification = function(self)
-		-- Rewrite to avoid QuestCache:Get, which taints
-		local questID = self:GetQuestID()
-		if questID then
-			return C_QuestInfoSystem.GetQuestClassification(questID)
-		end
-	end,
-}
-function ns:GetPOI(id, questId, mapID, x, y)
+function ns:GetPOI(id, questId, mapID, x, y, index)
 	local poi = pois[id]
 	if not poi then
 		poi = CreateFrame("Frame", "QuestPointerPOI" .. id, Minimap)
@@ -239,8 +234,7 @@ function ns:GetPOI(id, questId, mapID, x, y)
 
 		poi.arrow = arrow
 
-		local button = CreateFrame("Button", nil, poi, "POIButtonTemplate")
-		Mixin(button, POIButtonMixinPlus)
+		local button = self:GetPOIButton(questId, mapID, x, y, index)
 		button:SetPoint("CENTER", poi)
 		button:EnableMouse(false)
 		poi.poiButton = button
@@ -252,25 +246,17 @@ function ns:GetPOI(id, questId, mapID, x, y)
 	poi.arrow:SetScale(self.db.arrowScale)
 
 	poi.questId = questId
-	poi.title = C_QuestLog.GetTitleForQuestID(questId)
+	poi.title = (C_QuestLog.GetTitleForQuestID or C_QuestLog.GetQuestInfo)(questId)
 	poi.m = mapID
 	poi.x = x
 	poi.y = y
-	poi.worldquest = C_QuestLog.IsWorldQuest(questId)
+	poi.worldquest = C_QuestLog.IsWorldQuest and C_QuestLog.IsWorldQuest(questId)
+	poi.complete = (C_QuestLog.IsComplete or IsQuestComplete)(questId)
 
 	poi.active = true
 
 	poi.poiButton:SetQuestID(questId)
-	if poi.worldquest then
-		poi.complete = false
-		-- POIButtonUtil.GetStyle doesn't handle this case
-		-- (Blizzard_ObjectiveTrackerQuestPOIBlock also overrides it this way...)
-		poi.poiButton:SetStyle(POIButtonUtil.Style.WorldQuest)
-	else
-		poi.complete = C_QuestLog.IsComplete(questId)
-		poi.poiButton:SetStyle(POIButtonUtil_GetStyle(questId))
-	end
-	poi.poiButton:UpdateButtonStyle()
+	poi.poiButton:_RefreshStyle()
 
 	return poi
 end
@@ -360,7 +346,7 @@ do
 end
 
 function ns:UpdateEdges()
-	local superTrackedQuestId = C_SuperTrack.GetSuperTrackedQuestID()
+	local superTrackedQuestId = (C_SuperTrack and C_SuperTrack.GetSuperTrackedQuestID or GetSuperTrackedQuestID)()
 	for id, poi in pairs(pois) do
 		-- ns.Debug("Considering poi", id, poi.questId, poi.active)
 		if poi.active then
