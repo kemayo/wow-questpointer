@@ -33,7 +33,7 @@ QuestPOI_Initialize(poi_parent, function(button)
 end)
 poi_parent.numCompleted = 0
 
-function ns:GetPOIButton(questId, mapID, x, y, index)
+function ns:GetPOIButton(poi, questId, mapID, x, y, index)
 	local completed = IsQuestComplete(questId)
 	poi_parent.numCompleted = poi_parent.numCompleted + (completed and 1 or 0)
 	local button = QuestPOI_GetButton(poi_parent, questId, completed and "completed" or "numeric", index - poi_parent.numCompleted)

@@ -239,7 +239,7 @@ function ns:GetPOI(id, questId, mapID, x, y, index)
 	end
 	if not poi.poiButton then
 		-- Classic resets the poiButton because it maintains a pool whose setup differs based on type
-		local button = self:GetPOIButton(questId, mapID, x, y, index)
+		local button = self:GetPOIButton(poi, questId, mapID, x, y, index)
 		button:SetPoint("CENTER", poi)
 		button:EnableMouse(false)
 		poi.poiButton = button

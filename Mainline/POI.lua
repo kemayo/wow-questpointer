@@ -24,7 +24,7 @@ local POIButtonMixinPlus = {
 		end
 	end
 }
-function ns:GetPOIButton(questId, mapID, x, y, index)
+function ns:GetPOIButton(poi, questId, mapID, x, y, index)
 	local button = CreateFrame("Button", nil, poi, "POIButtonTemplate")
 	Mixin(button, POIButtonMixinPlus)
 	return button
