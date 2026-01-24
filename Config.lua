@@ -123,14 +123,8 @@ frame.OnCommit = frame.okay
 frame.OnDefault = frame.default
 frame.OnRefresh = frame.refresh
 
-if frame.parent then
-	local category = Settings.GetCategory(frame.parent)
-	local subcategory, layout = Settings.RegisterCanvasLayoutSubcategory(category, frame, frame.name)
-else
-	local category, layout = Settings.RegisterCanvasLayoutCategory(frame, frame.name)
-	Settings.RegisterAddOnCategory(category)
-	category.ID = myname
-end
+local category, layout = Settings.RegisterCanvasLayoutCategory(frame, frame.name)
+Settings.RegisterAddOnCategory(category)
 
 -----------------------------
 --      Slash command      --
@@ -146,7 +140,7 @@ SlashCmdList[myname:upper()] = function(msg)
 			ns.Print("TomTom not found")
 		end
 	else
-		Settings.OpenToCategory(myname)
+		Settings.OpenToCategory(category:GetID())
 	end
 end
 
