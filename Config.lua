@@ -154,7 +154,7 @@ LibStub:GetLibrary("LibDataBroker-1.1"):NewDataObject(myname, {
 	iconCoords = {0, 0.5, 0, 0.5},
 	OnClick = function(self, button)
 		if button == "RightButton" then
-			Settings.OpenToCategory(myname)
+			Settings.OpenToCategory(category:GetID())
 		elseif ns.TomTomClosestPOI then
 			ns:TomTomClosestPOI()
 		end
